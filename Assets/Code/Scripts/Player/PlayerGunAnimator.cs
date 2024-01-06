@@ -1,5 +1,6 @@
 using UnityEngine;
 using Zombies.Runtime.Core;
+using Zombies.Runtime.Utility;
 
 namespace Zombies.Runtime.Player
 {
@@ -10,23 +11,16 @@ namespace Zombies.Runtime.Player
 
         [Space]
         public Vector3 localHoldPosition;
-        public float translationSway;
-        public float lookSway;
+        public float translationSway = -0.05f;
+        public bool interpolate = true;
 
-        public float spring;
-        public float damper;
-        public int subframes = 4;
+        public PidControllerV3 pid;
         public bool reset;
 
         private PlayerGun gun;
-
-        private Vector3 position;
-        private Vector3 velocity;
-        private Vector3 force;
-
         private Vector2 viewDelta;
-
-        private float deltaTime = 0.02f;
+        
+        private Vector3 lastPosition;
 
         public PlayerController Player => gun.Player;
         public BipedalMovement Biped => Player.Biped;
@@ -35,44 +29,29 @@ namespace Zombies.Runtime.Player
 
         private void FixedUpdate()
         {
+            lastPosition = pid.position;
             var holdPosition = Biped.view.TransformVector(localHoldPosition);
 
             if (reset)
             {
                 reset = false;
-                position = Vector3.zero;
-                velocity = Vector3.zero;
-                force = Vector3.zero;
+                pid.Reset();
             }
+            
+            var offset = Biped.body.GetPointVelocity(transform.position) * translationSway;
 
-            deltaTime = Time.deltaTime / subframes;
-            for (var i = 0; i < Mathf.Max(1, subframes); i++)
-            {
-                force += (holdPosition - position) * spring - velocity * damper;
-                force += Biped.body.GetPointVelocity(transform.position) * translationSway;
+            viewDelta = Vector3.zero;
 
-                var view = Biped.view;
-                force += (view.right * viewDelta.x + view.up * viewDelta.y) * lookSway;
-                viewDelta = Vector3.zero;
-
-                Integrate();
-            }
-        }
-
-        private void Integrate()
-        {
-            position += velocity * deltaTime;
-            velocity += force * deltaTime;
-            force = Vector3.zero;
-
-            viewDelta += Player.ViewInput;
+            pid.position += offset * Time.deltaTime;
+            
+            pid.Update(holdPosition, Time.deltaTime);
         }
 
         private Vector3 GetFinalPosition()
         {
-            var position = this.position;
+            var position = pid.position;
+            if (interpolate) position = Vector3.Lerp(lastPosition, position, (Time.time - Time.fixedTime) / Time.fixedDeltaTime);
             position += root.parent.position;
-            position += velocity * (Time.time - Time.fixedTime);
             return position;
         }
 
@@ -80,6 +59,8 @@ namespace Zombies.Runtime.Player
         {
             var finalPosition = GetFinalPosition();
             root.position = finalPosition;
+
+            viewDelta += Player.ViewInput;
         }
     }
 }

@@ -180,7 +180,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!136 &7055176953185318253
@@ -5596,10 +5596,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   root: {fileID: 3250420127508647931}
   localHoldPosition: {x: 0, y: -0.09, z: 0.15}
-  translationSway: -0.2
-  spring: 300
-  damper: 20
-  subframes: 4
+  translationSway: -0.05
+  lookSway: 0
+  interpolate: 1
+  pid:
+    p: 800
+    i: 0
+    d: 40
+    subframes: 4
+    position: {x: 0, y: 0, z: 0}
+    velocity: {x: 0, y: 0, z: 0}
+    integration: {x: 0, y: 0, z: 0}
   reset: 0
 --- !u!1001 &2875319954992178853
 PrefabInstance:

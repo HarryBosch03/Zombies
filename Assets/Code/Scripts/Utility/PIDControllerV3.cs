@@ -6,27 +6,36 @@ namespace Zombies.Runtime.Utility
     public class PidControllerV3
     {
         public float p, i, d;
+        public int subframes = 1;
 
         [HideInInspector]
         public Vector3 position;
+        [HideInInspector]
         public Vector3 velocity;
-
-        private Vector3 lastTargetPosition;
+        [HideInInspector]
+        public Vector3 integration;
 
         public void Update(Vector3 targetPosition, float deltaTime)
         {
-            var targetVelocity = (targetPosition - lastTargetPosition) / deltaTime;
-            Update(targetPosition, targetVelocity, deltaTime);
-        }
-        
-        public void Update(Vector3 targetPosition, Vector3 targetVelocity, float deltaTime)
-        {
-            var force = (targetPosition - position) * p + targetVelocity * i + (targetVelocity - velocity) * d;
+            var subframes = Mathf.Max(this.subframes, 1);
 
-            position += velocity * deltaTime;
-            velocity += force * deltaTime;
-            
-            lastTargetPosition = targetPosition;
+            deltaTime /= subframes;
+            for (var it = 0; it < subframes; it++)
+            {
+                var force = (targetPosition - position) * p + integration * i - velocity * d;
+
+                position += velocity * deltaTime;
+                velocity += force * deltaTime;
+
+                integration += (targetPosition - position) * deltaTime;
+            }
+        }
+
+        public void Reset()
+        {
+            position = Vector3.zero;
+            velocity = Vector3.zero;
+            integration = Vector3.zero;
         }
 
         public static implicit operator Vector3(PidControllerV3 controller) => controller.position;

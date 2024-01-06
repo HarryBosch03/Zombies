@@ -47,6 +47,10 @@ namespace Zombies.Runtime.Core
         private void Awake()
         {
             body = gameObject.GetOrAddComponent<Rigidbody>();
+            body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            body.constraints = RigidbodyConstraints.FreezeRotation;
+            
             view = transform.Find("View");
 
             body.constraints = RigidbodyConstraints.FreezeRotation;
@@ -110,9 +114,9 @@ namespace Zombies.Runtime.Core
             viewRotation.x %= 360.0f;
             viewRotation.y = Mathf.Clamp(viewRotation.y, -90.0f, 90.0f);
 
-            transform.rotation = Quaternion.Euler(0.0f, viewRotation.x, 0.0f);
+            body.rotation = Quaternion.Euler(0.0f, viewRotation.x, 0.0f);
 
-            view.position = transform.position + Vector3.up * 1.8f;
+            view.position = body.position + Vector3.up * 1.8f;
             view.rotation = Quaternion.Euler(-viewRotation.y, viewRotation.x, 0.0f);
         }
     }
