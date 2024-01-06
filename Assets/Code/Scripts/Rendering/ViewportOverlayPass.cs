@@ -66,8 +66,9 @@ namespace Zombies.Runtime.Rendering
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
             var descriptor = renderingData.cameraData.cameraTargetDescriptor;
-            descriptor.width >>= settings.downscale;
-            descriptor.height >>= settings.downscale;
+            var aspect = (float)descriptor.width / descriptor.height;
+            descriptor.width = Mathf.RoundToInt(settings.height * aspect);
+            descriptor.height = settings.height;
             descriptor.colorFormat = RenderTextureFormat.ARGB32;
             
             cmd.GetTemporaryRT(rtHandle, descriptor);
@@ -116,14 +117,14 @@ namespace Zombies.Runtime.Rendering
         [System.Serializable]
         public struct Settings
         {
-            public int downscale;
+            public int height;
             public float fieldOfView;
             public float nearClip;
             public float farClip;
 
             public void Validate()
             {
-                downscale = Mathf.Max(0, downscale);
+                height = Mathf.Max(2, height);
             }
         }
     }
