@@ -31,6 +31,7 @@ namespace Zombies.Runtime.Core
 
         private float height;
         private RaycastHit groundHit;
+        private Vector3 lastPosition;
         
         public bool IsOnGround { get; private set; }
         public float Movement
@@ -48,7 +49,7 @@ namespace Zombies.Runtime.Core
         {
             body = gameObject.GetOrAddComponent<Rigidbody>();
             body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            body.interpolation = RigidbodyInterpolation.Interpolate;
+            body.interpolation = RigidbodyInterpolation.None;
             body.constraints = RigidbodyConstraints.FreezeRotation;
             
             view = transform.Find("View");
@@ -62,6 +63,8 @@ namespace Zombies.Runtime.Core
             Move();
             Jump();
             ApplyGravity();
+
+            lastPosition = transform.position;
         }
 
         private void ApplyGravity()
@@ -116,7 +119,7 @@ namespace Zombies.Runtime.Core
 
             body.rotation = Quaternion.Euler(0.0f, viewRotation.x, 0.0f);
 
-            view.position = body.position + Vector3.up * 1.8f;
+            view.position = Vector3.Lerp(lastPosition, transform.position, (Time.time - Time.fixedTime) / Time.fixedDeltaTime) + Vector3.up * 1.8f;
             view.rotation = Quaternion.Euler(-viewRotation.y, viewRotation.x, 0.0f);
         }
     }

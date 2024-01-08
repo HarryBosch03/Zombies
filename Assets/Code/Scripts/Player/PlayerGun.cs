@@ -26,6 +26,8 @@ namespace Zombies.Runtime.Player
         private ParticleSystem flash;
         private ParticleSystem smoke;
 
+        public static event System.Action<PlayerGun> ShootEvent;
+
         public override string AmmoLabel => ammo >= 0 ? $"{ammo}/{maxAmmo}" : "--/--";
         public Vector3 MuzzlePosition => (MainCam ? MainCam.transform : transform).TransformPoint(muzzleOffset);
 
@@ -87,6 +89,8 @@ namespace Zombies.Runtime.Player
 
             lastFireTime = Time.time;
             ammo--;
+            
+            ShootEvent?.Invoke(this);
         }
 
         private void OnDrawGizmosSelected()

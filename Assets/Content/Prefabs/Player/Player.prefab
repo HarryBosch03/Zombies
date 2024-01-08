@@ -5597,25 +5597,31 @@ MonoBehaviour:
   root: {fileID: 3250420127508647931}
   localHoldPosition: {x: 0, y: -0.09, z: 0.15}
   localHoldRotation: {x: 90, y: 0, z: 0}
-  translationSway: -0.05
+  translationSway: -3
+  shootImpulse: 300
+  shootTorque: {x: -50, y: 20, z: 40}
   translationPid:
-    p: 800
-    i: 0
-    d: 40
+    spring: 800
+    damping: 40
+    anticipation: 0
     subframes: 4
+    interpolate: 1
+    mute: 0
     isRotation: 0
-    position: {x: 0, y: 0, z: 0}
-    velocity: {x: 0, y: 0, z: 0}
-    integration: {x: 0, y: 0, z: 0}
+    position: {x: -0.11943435, y: -0.082657546, z: -0.09746844}
+    velocity: {x: -0.006947692, y: 0.05772909, z: -0.041488845}
+    force: {x: 0, y: 0, z: 0}
   rotationPid:
-    p: 800
-    i: 1000
-    d: 100
+    spring: 1400
+    damping: 40
+    anticipation: 40
     subframes: 4
+    interpolate: 1
+    mute: 0
     isRotation: 1
-    position: {x: 44.554462, y: -30.322567, z: 0.00001182899}
-    velocity: {x: -6.4979596, y: -1.1612241, z: 0.00000062989244}
-    integration: {x: 2.1320908, y: -1.544557, z: 0.000000062989244}
+    position: {x: -3.3249662, y: 3470.0056, z: 0.000005064464}
+    velocity: {x: -14.591666, y: 2.4197178, z: 0.0000024622161}
+    force: {x: 0, y: 0, z: 0}
   reset: 0
 --- !u!1001 &2875319954992178853
 PrefabInstance:

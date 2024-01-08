@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Zombies.Runtime.Utility
 {
@@ -6,9 +7,8 @@ namespace Zombies.Runtime.Utility
     {
         public int fps = 60;
 
-        private void OnEnable()
+        private void Update()
         {
-            Debug.Log(Application.targetFrameRate);
             Application.targetFrameRate = fps;
         }
 
