@@ -5,7 +5,7 @@ namespace Zombies.Runtime.Core
 {
     [SelectionBase]
     [DisallowMultipleComponent]
-    public class BipedalMovement : MonoBehaviour
+    public class PlayerMovement : MonoBehaviour
     {
         #region Properties
         public float moveSpeed = 12.0f;
@@ -34,6 +34,7 @@ namespace Zombies.Runtime.Core
         private Vector3 lastPosition;
         
         public bool IsOnGround { get; private set; }
+        public bool Running { get; set; }
         public float Movement
         {
             get
@@ -44,6 +45,9 @@ namespace Zombies.Runtime.Core
         }
         private Vector3 Gravity => Physics.gravity * (body.velocity.y > 0.0f ? upGravity : downGravity);
         public Vector3 Center => view.position;
+        public Vector3 Velocity => body.velocity;
+        public float GroundSpeed => new Vector2(Velocity.x, Velocity.z).magnitude;
+        public float NormalizedGroundSpeed => GroundSpeed / moveSpeed;
 
         private void Awake()
         {

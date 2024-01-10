@@ -11,7 +11,6 @@ namespace Zombies.Runtime.Player
         public InputActionAsset inputAsset;
         public float mouseSensitivity = 0.3f;
 
-        private Camera mainCam;
         private bool jumpFlag;
 
         public InputAction MoveAction { get; private set; }
@@ -27,7 +26,6 @@ namespace Zombies.Runtime.Player
 
         private void Awake()
         {
-            mainCam = Camera.main;
             Biped = GetComponent<PlayerMovement>();
 
             MoveAction = inputAsset.FindAction("Move");
@@ -70,12 +68,6 @@ namespace Zombies.Runtime.Player
             ViewInput = delta;
 
             if (JumpAction.WasPressedThisFrame()) jumpFlag = true;
-        }
-
-        private void LateUpdate()
-        {
-            mainCam.transform.position = Biped.view.position;
-            mainCam.transform.rotation = Biped.view.rotation;
         }
     }
 }

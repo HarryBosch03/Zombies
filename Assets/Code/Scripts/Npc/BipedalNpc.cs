@@ -5,7 +5,7 @@ using Zombies.Runtime.Vitality;
 
 namespace Zombies.Runtime.Npc
 {
-    [RequireComponent(typeof(BipedalMovement), typeof(HealthController))]
+    [RequireComponent(typeof(PlayerMovement), typeof(HealthController))]
     [SelectionBase, DisallowMultipleComponent]
     public class BipedalNpc : MonoBehaviour
     {
@@ -16,7 +16,7 @@ namespace Zombies.Runtime.Npc
 
         private bool PathActive => navPathIndex < (navPath?.corners.Length ?? 0);
 
-        public BipedalMovement Movement { get; private set; }
+        public PlayerMovement Movement { get; private set; }
         public HealthController Health { get; private set; }
         public Rigidbody Body => Movement.body;
 
@@ -25,7 +25,7 @@ namespace Zombies.Runtime.Npc
         
         private void Awake()
         {
-            Movement = GetComponent<BipedalMovement>();
+            Movement = GetComponent<PlayerMovement>();
             Health = GetComponent<HealthController>();
 
             navPath = new NavMeshPath();

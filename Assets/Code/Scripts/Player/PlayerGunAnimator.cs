@@ -30,7 +30,7 @@ namespace Zombies.Runtime.Player
         private Vector2 viewDelta;
 
         public PlayerController Player => gun.Player;
-        public BipedalMovement Biped => Player.Biped;
+        public PlayerMovement Biped => Player.Biped;
 
         private void Awake() { gun = GetComponent<PlayerGun>(); }
 

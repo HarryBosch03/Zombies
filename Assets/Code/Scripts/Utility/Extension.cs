@@ -49,5 +49,7 @@ namespace Zombies.Runtime.Utility
             
             damageable.Damage(damage);
         }
+
+        public static Quaternion Euler(this Vector3 v) => Quaternion.Euler(v);
     }
 }
