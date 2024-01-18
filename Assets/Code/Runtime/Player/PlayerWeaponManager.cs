@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using FishNet.Object;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Zombies.Runtime.Player
 {
     [RequireComponent(typeof(PlayerController))]
-    public class PlayerWeaponManager : MonoBehaviour
+    public class PlayerWeaponManager : NetworkBehaviour
     {
         public string[] equippedWeapons;
         public int maxEquippedWeapons = 10;
@@ -27,7 +28,6 @@ namespace Zombies.Runtime.Player
                 var weapon = e.GetComponent<PlayerWeapon>();
                 if (!weapon) continue;
                 registeredWeapons.Add(weapon);
-                weapon.gameObject.SetActive(false);
             }
 
             var inputAsset = player.inputAsset;
@@ -37,22 +37,24 @@ namespace Zombies.Runtime.Player
                 if (action == null) continue;
                 action.performed += SwitchWeaponInputCallback(i);
             }
-
         }
 
-        private void OnEnable()
+        private void Start()
         {
-            currentWeaponIndex = -1;
-
-            foreach (var weapon in registeredWeapons)
+            if (registeredWeapons.Count > 0)
             {
-                weapon.gameObject.SetActive(false);
+                registeredWeapons[0].Equip();
+                for (var i = 1; i < registeredWeapons.Count; i++)
+                {
+                    registeredWeapons[i].Unequip();
+                }
             }
-            
-            EquipWeapons(0);
         }
 
-        private Action<InputAction.CallbackContext> SwitchWeaponInputCallback(int i) => _ => EquipWeapons(i);
+        private Action<InputAction.CallbackContext> SwitchWeaponInputCallback(int i) => _ =>
+        {
+            if (IsOwner) ServerRpcEquipWeapons(i);
+        };
 
         private int NameToIndex(string name)
         {
@@ -66,13 +68,23 @@ namespace Zombies.Runtime.Player
             return -1;
         }
 
+        [ServerRpc]
+        private void ServerRpcEquipWeapons(int i)
+        {
+            EquipWeapons(i);
+            ObserverRpcEquipWeapons(i);
+        }
+        
+        [ObserversRpc]
+        private void ObserverRpcEquipWeapons(int i) => EquipWeapons(i);
+
         private void EquipWeapons(int i)
         {
             if (i == currentWeaponIndex) return;
-            
-            if (CurrentWeapon) CurrentWeapon.gameObject.SetActive(false);
+
+            if (CurrentWeapon) CurrentWeapon.Unequip();
             currentWeaponIndex = i >= 0 && i < equippedWeapons.Length ? NameToIndex(equippedWeapons[i]) : -1;
-            if (CurrentWeapon) CurrentWeapon.gameObject.SetActive(true);
+            if (CurrentWeapon) CurrentWeapon.Equip();
         }
     }
 }

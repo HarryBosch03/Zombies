@@ -33,3 +33,7 @@ MonoBehaviour:
     translationAmplitude: {x: 0, y: 0}
     canterFrequency: {x: 0, y: 0, z: 0.4}
     canterAmplitude: {x: 0, y: 0, z: 0.7}
+  poseSmoothing: 0
+  fieldOfView: 90
+  fovEffects: 1
+  runZoom: 0.9

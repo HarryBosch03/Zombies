@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FishNet.Object;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Zombies.Runtime.Core;
@@ -6,12 +7,13 @@ using Zombies.Runtime.Core;
 namespace Zombies.Runtime.Player
 {
     [RequireComponent(typeof(PlayerMovement))]
-    public class PlayerController : MonoBehaviour, IPersonality
+    public class PlayerController : NetworkBehaviour, IPersonality
     {
         public InputActionAsset inputAsset;
         public float mouseSensitivity = 0.3f;
 
         private bool jumpFlag;
+        private string username;
 
         public InputAction MoveAction { get; private set; }
         public InputAction JumpAction { get; private set; }
@@ -38,8 +40,8 @@ namespace Zombies.Runtime.Player
         private void OnEnable()
         {
             inputAsset.Enable();
-            Cursor.lockState = CursorLockMode.Locked;
             
+            Cursor.lockState = CursorLockMode.Locked;
             All.Add(this);
         }
 
@@ -47,27 +49,60 @@ namespace Zombies.Runtime.Player
         {
             inputAsset.Disable();
             Cursor.lockState = CursorLockMode.None;
-            
+
             All.Remove(this);
+        }
+
+        public override void OnStartNetwork()
+        {
+            if (Owner.IsLocalClient)
+            {
+                username = Reference.FirstNames[Random.Range(0, Reference.FirstNames.Length)];
+                RpcSetUsername(username);
+            }
+        }
+
+        private void RpcSetUsername(string username)
+        {
+            this.username = username;
+            name = username;
         }
 
         private void FixedUpdate()
         {
-            var moveInput = MoveAction.ReadValue<Vector2>();
-            Biped.moveInput = transform.TransformDirection(moveInput.x, 0.0f, moveInput.y);
-            
-            Biped.jump = jumpFlag;
-            jumpFlag = false;
+            if (IsOwner)
+            {
+                var moveInput = MoveAction.ReadValue<Vector2>();
+                Biped.moveInput = transform.TransformDirection(moveInput.x, 0.0f, moveInput.y);
+
+                Biped.jump = jumpFlag;
+                jumpFlag = false;
+            }
         }
 
         private void Update()
         {
+            if (!IsOwner) return;
+
             var delta = Vector2.zero;
             delta += Mouse.current.delta.ReadValue() * mouseSensitivity * Mathf.Min(1.0f, Time.timeScale);
             Biped.viewRotation += delta;
             ViewInput = delta;
 
+            ViewInput = Vector2.zero;
+
             if (JumpAction.WasPressedThisFrame()) jumpFlag = true;
+        }
+
+        public static void EnableInput(bool state)
+        {
+            foreach (var p in All)
+            {
+                if (p.inputAsset.enabled == state) continue;
+
+                if (state) p.inputAsset.Enable();
+                else p.inputAsset.Disable();
+            }
         }
     }
 }

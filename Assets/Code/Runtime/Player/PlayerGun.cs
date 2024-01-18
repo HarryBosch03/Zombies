@@ -1,3 +1,4 @@
+using FishNet.Object;
 using UnityEngine;
 using Zombies.Runtime.Projectiles;
 using Zombies.Runtime.Utility;
@@ -36,13 +37,8 @@ namespace Zombies.Runtime.Player
             player = GetComponentInParent<PlayerController>();
 
             base.Awake();
-            var viewport = transform.Find("Viewport");
+            
             animator = viewport.GetComponentInChildren<Animator>();
-
-            foreach (var t in viewport.GetComponentsInChildren<Transform>())
-            {
-                t.gameObject.layer = ViewportLayer;
-            }
 
             flash = viewport.Find<ParticleSystem>("Flash");
             smoke = viewport.Find<ParticleSystem>("Smoke");
@@ -50,7 +46,7 @@ namespace Zombies.Runtime.Player
             ammo = maxAmmo;
         }
 
-        private void Update()
+        protected override void UpdateEquipped()
         {
             if (singleFire)
             {
@@ -82,6 +78,7 @@ namespace Zombies.Runtime.Player
 
             var direction = MainCam.transform.forward;
             projectile.SpawnFromPrefab(player.gameObject, args, MuzzlePosition, direction);
+            ServerRpcShoot(MuzzlePosition, direction);
 
             if (animator) animator.Play("Shoot", 0, 0.0f);
             if (flash) flash.Play();
@@ -89,8 +86,23 @@ namespace Zombies.Runtime.Player
 
             lastFireTime = Time.time;
             ammo--;
-            
+
             ShootEvent?.Invoke(this);
+        }
+
+        [ServerRpc]
+        private void ServerRpcShoot(Vector3 position, Vector3 direction)
+        {
+            ClientRpcShoot(position, direction);
+            if (IsOwner) return;
+            projectile.SpawnFromPrefab(player.gameObject, args, position, direction);
+        }
+        
+        [ObserversRpc]
+        private void ClientRpcShoot(Vector3 position, Vector3 direction)
+        {
+            if (IsOwner) return;
+            projectile.SpawnFromPrefab(player.gameObject, args, position, direction);
         }
 
         private void OnDrawGizmosSelected()

@@ -1,4 +1,5 @@
 using System;
+using FishNet.Object;
 using UnityEngine;
 using Zombies.Runtime.Core;
 using Zombies.Runtime.Utility;
@@ -6,7 +7,7 @@ using Zombies.Runtime.Utility;
 namespace Zombies.Runtime.Player
 {
     [RequireComponent(typeof(PlayerController))]
-    public class PlayerCameraAnimator : MonoBehaviour
+    public class PlayerCameraAnimator : NetworkBehaviour
     {
         [Range(0.0f, 1.0f)]
         public float weight = 1.0f;
@@ -15,7 +16,7 @@ namespace Zombies.Runtime.Player
 
         private Vector3 smoothedPosition;
         private Quaternion smoothedRotation;
-        
+
         private PlayerController controller;
         private Camera mainCamera;
         private float distance;
@@ -42,10 +43,10 @@ namespace Zombies.Runtime.Player
         {
             var angle = settings.fieldOfView * 0.5f * Mathf.Deg2Rad;
             var tangent = Mathf.Tan(angle);
-            
+
             var zoom = FunctionalZoom * Mathf.Lerp(1.0f, EffectZoom, settings.fovEffects);
             angle = Mathf.Atan(tangent / zoom);
-            
+
             return angle * 2.0f * Mathf.Rad2Deg;
         }
 
@@ -81,9 +82,12 @@ namespace Zombies.Runtime.Player
             smoothedPosition = Vector3.Lerp(position, smoothedPosition, Time.deltaTime * settings.poseSmoothing);
             smoothedRotation = Quaternion.Slerp(rotation, smoothedRotation, Time.deltaTime * settings.poseSmoothing);
 
+            if (!IsOwner) return;
+            
             var cam = mainCamera.transform;
             cam.position = smoothedPosition;
             cam.rotation = smoothedRotation;
+            mainCamera.fieldOfView = fov;
         }
 
         private Pose CompilePose()
@@ -111,7 +115,7 @@ namespace Zombies.Runtime.Player
             {
                 var t = distance * baseFrequency;
                 var rawPose = new Pose();
-                
+
                 rawPose.position = new Vector3
                 {
                     x = Mathf.Sin(t * Mathf.PI * translationFrequency.x) * translationAmplitude.x,
@@ -128,7 +132,7 @@ namespace Zombies.Runtime.Player
 
                 pose.position = Vector3.Lerp(pose.position, rawPose.position, weight);
                 pose.rotation = Quaternion.Slerp(pose.rotation, rawPose.rotation, weight);
-                
+
                 return pose;
             }
         }

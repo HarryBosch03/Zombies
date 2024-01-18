@@ -1,4 +1,7 @@
 using System.Linq;
+using FishNet;
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using UnityEngine;
 using Zombies.Runtime.Utility;
 using Zombies.Runtime.Vitality;
@@ -10,7 +13,9 @@ namespace Zombies.Runtime.Projectiles
         private GameObject hitFX;
         private ParticleSystem trail;
 
+        [SyncVar]
         private ProjectileSpawnArgs args;
+        
         private Vector3 velocity;
         private Vector3 force;
 
@@ -31,12 +36,12 @@ namespace Zombies.Runtime.Projectiles
             trail = transform.Find<ParticleSystem>("Trail");
         }
 
-        public Projectile[] SpawnFromPrefab(GameObject owner, ProjectileSpawnArgs args, Vector3 position, Vector3 direction)
+        public void SpawnFromPrefab(GameObject owner, ProjectileSpawnArgs args, Vector3 position, Vector3 direction)
         {
-            return SpawnFromPrefab(owner, args, position, Quaternion.LookRotation(direction));
+            SpawnFromPrefab(owner, args, position, Quaternion.LookRotation(direction));
         }
         
-        public Projectile[] SpawnFromPrefab(GameObject owner, ProjectileSpawnArgs args, Vector3 position, Quaternion baseOrientation)
+        public void SpawnFromPrefab(GameObject owner, ProjectileSpawnArgs args, Vector3 position, Quaternion baseOrientation)
         {
             var instances = new Projectile[args.count];
             for (var i = 0; i < args.count; i++)
@@ -49,7 +54,6 @@ namespace Zombies.Runtime.Projectiles
                 instance.SetupWithArgs(args);
                 instances[i] = instance;
             }
-            return instances;
         }
 
         private float SpreadToDeg(float spread)

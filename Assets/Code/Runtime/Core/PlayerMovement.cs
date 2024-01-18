@@ -1,13 +1,18 @@
-﻿using UnityEngine;
+﻿using FishNet.Object;
+using UnityEngine;
+using UnityEngine.Serialization;
 using Zombies.Runtime.Utility;
 
 namespace Zombies.Runtime.Core
 {
     [SelectionBase]
     [DisallowMultipleComponent]
-    public class PlayerMovement : MonoBehaviour
+    public class PlayerMovement : NetworkBehaviour
     {
+        public bool isOwner;
+
         #region Properties
+
         public float moveSpeed = 12.0f;
         public float accelerationTime = 0.1f;
         public float jumpHeight = 2.2f;
@@ -20,8 +25,9 @@ namespace Zombies.Runtime.Core
 
         [Range(0.0f, 1.0f)]
         public float heightSmoothing = 0.4f;
+
         #endregion
-        
+
         [HideInInspector] public Vector3 moveInput;
         [HideInInspector] public bool jump;
 
@@ -32,9 +38,10 @@ namespace Zombies.Runtime.Core
         private float height;
         private RaycastHit groundHit;
         private Vector3 lastPosition;
-        
+
         public bool IsOnGround { get; private set; }
         public bool Running { get; set; }
+
         public float Movement
         {
             get
@@ -43,6 +50,7 @@ namespace Zombies.Runtime.Core
                 return Mathf.Sqrt(v.x * v.x + v.z * v.z) / moveSpeed;
             }
         }
+
         private Vector3 Gravity => Physics.gravity * (body.velocity.y > 0.0f ? upGravity : downGravity);
         public Vector3 Center => view.position;
         public Vector3 Velocity => body.velocity;
@@ -55,7 +63,7 @@ namespace Zombies.Runtime.Core
             body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             body.interpolation = RigidbodyInterpolation.None;
             body.constraints = RigidbodyConstraints.FreezeRotation;
-            
+
             view = transform.Find("View");
 
             body.constraints = RigidbodyConstraints.FreezeRotation;
@@ -63,12 +71,51 @@ namespace Zombies.Runtime.Core
 
         private void FixedUpdate()
         {
+            isOwner = IsOwner;
+
+            if (IsOwner)
+            {
+                var networkState = new NetworkState();
+
+                networkState.position = body.position;
+                networkState.velocity = body.velocity;
+                networkState.rotation = viewRotation;
+                
+                networkState.moveInput = moveInput;
+                networkState.jump = jump;
+
+                RpcSendNetworkStateToServer(networkState);
+            }
+
             LookForGround();
             Move();
             Jump();
             ApplyGravity();
 
             lastPosition = transform.position;
+        }
+
+        [ServerRpc]
+        private void RpcSendNetworkStateToServer(NetworkState networkState)
+        {
+            ApplyNetworkState(networkState);
+            RpcSendNetworkStateToObservers(networkState);
+        }
+        
+        [ObserversRpc]
+        private void RpcSendNetworkStateToObservers(NetworkState networkState) => ApplyNetworkState(networkState);
+
+        private void ApplyNetworkState(NetworkState networkState)
+        {
+            if (IsOwner) return;
+
+            body.position = reconcileV3(body.position, networkState.position, 1.0f);
+            body.velocity = reconcileV3(body.velocity, networkState.velocity, 1.0f);
+            viewRotation = networkState.rotation;
+            moveInput = networkState.moveInput;
+            jump = networkState.jump;
+
+            Vector3 reconcileV3(Vector3 localValue, Vector3 netValue, float threshold) => (localValue - netValue).magnitude > threshold ? netValue : localValue;
         }
 
         private void ApplyGravity()
@@ -125,6 +172,17 @@ namespace Zombies.Runtime.Core
 
             view.position = Vector3.Lerp(lastPosition, transform.position, (Time.time - Time.fixedTime) / Time.fixedDeltaTime) + Vector3.up * 1.8f;
             view.rotation = Quaternion.Euler(-viewRotation.y, viewRotation.x, 0.0f);
+        }
+
+        [System.Serializable]
+        public struct NetworkState
+        {
+            public Vector3 position;
+            public Vector3 velocity;
+            public Vector2 rotation;
+
+            public Vector3 moveInput;
+            [FormerlySerializedAs("jumpFlag")] public bool jump;
         }
     }
 }

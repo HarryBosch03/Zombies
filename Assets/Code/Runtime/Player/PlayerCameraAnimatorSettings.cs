@@ -11,7 +11,7 @@ namespace Zombies.Runtime.Player
         public PlayerCameraAnimator.SwayPose runPose;
         public float poseSmoothing;
         
-        public float fieldOfView;
+        public float fieldOfView = 90.0f;
         [Range(0.0f, 1.0f)]
         public float fovEffects = 1.0f;
         public float runZoom = 0.9f;

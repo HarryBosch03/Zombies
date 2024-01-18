@@ -46,6 +46,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01e4a1a6d344fc84cb698971b28a4160, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
+  args:
+    damage:
+      damage: 1
+      ignoreLocationalDamage: 0
+    speed: 100
+    lifetime: 2
+    gravityScale: 1
+    pierce: 0
+    spread: 0
+    count: 1
 --- !u!1 &7338750221126747386
 GameObject:
   m_ObjectHideFlags: 0
