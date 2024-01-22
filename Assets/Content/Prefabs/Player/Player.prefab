@@ -46,9 +46,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf72d0d2c13aaea42ae05f2c039d501b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 4
+  _componentIndexCache: 5
   _addedNetworkObject: {fileID: 8254612993953636219}
   _networkObjectCache: {fileID: 8254612993953636219}
+  isOwner: 0
   projectile: {fileID: 1202828691346312600, guid: 1f492ab9d5d6cf644a3ea6c772a7ff81, type: 3}
   args:
     damage:
@@ -154,6 +155,7 @@ MonoBehaviour:
   _componentIndexCache: 1
   _addedNetworkObject: {fileID: 8254612993953636219}
   _networkObjectCache: {fileID: 8254612993953636219}
+  isOwner: 0
   moveSpeed: 12
   accelerationTime: 0.1
   jumpHeight: 2.2
@@ -229,9 +231,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b62abd8ba991a3d48904ffeda89d9723, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  equippedWeapons:
-  - Shotgun
-  - Pistol
+  _componentIndexCache: 2
+  _addedNetworkObject: {fileID: 8254612993953636219}
+  _networkObjectCache: {fileID: 8254612993953636219}
+  equippedWeapons: 0000000001000000
   maxEquippedWeapons: 10
 --- !u!114 &8946422024946501851
 MonoBehaviour:
@@ -257,7 +260,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a129d47be1fe451428e596a8eba6151a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 2
+  _componentIndexCache: 3
   _addedNetworkObject: {fileID: 8254612993953636219}
   _networkObjectCache: {fileID: 8254612993953636219}
   weight: 1
@@ -280,6 +283,7 @@ MonoBehaviour:
   _networkBehaviours:
   - {fileID: 2304513883511066591}
   - {fileID: 8269865097884213056}
+  - {fileID: 1880108614414806708}
   - {fileID: 8794043225059126553}
   - {fileID: 546014458826362993}
   - {fileID: 1019512015593050057}
@@ -796,7 +800,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a318676f179487dbe019dd8b391a715, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 3
+  _componentIndexCache: 4
   _addedNetworkObject: {fileID: 8254612993953636219}
   _networkObjectCache: {fileID: 8254612993953636219}
   enableIfClient: 0
@@ -5897,9 +5901,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf72d0d2c13aaea42ae05f2c039d501b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 5
+  _componentIndexCache: 6
   _addedNetworkObject: {fileID: 8254612993953636219}
   _networkObjectCache: {fileID: 8254612993953636219}
+  isOwner: 0
   projectile: {fileID: 1202828691346312600, guid: 1f492ab9d5d6cf644a3ea6c772a7ff81, type: 3}
   args:
     damage:

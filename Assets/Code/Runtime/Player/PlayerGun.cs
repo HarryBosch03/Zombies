@@ -37,7 +37,7 @@ namespace Zombies.Runtime.Player
             player = GetComponentInParent<PlayerController>();
 
             base.Awake();
-            
+
             animator = viewport.GetComponentInChildren<Animator>();
 
             flash = viewport.Find<ParticleSystem>("Flash");
@@ -63,16 +63,20 @@ namespace Zombies.Runtime.Player
 
         private void FixedUpdate()
         {
-            if (shootFlag)
+            if (Equipped)
             {
-                Shoot();
+                if (shootFlag)
+                {
+                    Shoot();
+                }
             }
-
+            
             ResetFlags();
         }
 
         private void Shoot()
         {
+            if (!IsOwner) return;
             if (Time.time < lastFireTime + 60.0f / fireRate) return;
             if (ammo == 0) return;
 
@@ -97,7 +101,7 @@ namespace Zombies.Runtime.Player
             if (IsOwner) return;
             projectile.SpawnFromPrefab(player.gameObject, args, position, direction);
         }
-        
+
         [ObserversRpc]
         private void ClientRpcShoot(Vector3 position, Vector3 direction)
         {

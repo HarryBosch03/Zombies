@@ -9,7 +9,7 @@ namespace Zombies.Runtime.Player
     [RequireComponent(typeof(PlayerController))]
     public class PlayerWeaponManager : NetworkBehaviour
     {
-        public string[] equippedWeapons;
+        public int[] equippedWeapons;
         public int maxEquippedWeapons = 10;
 
         private PlayerController player;
@@ -53,20 +53,12 @@ namespace Zombies.Runtime.Player
 
         private Action<InputAction.CallbackContext> SwitchWeaponInputCallback(int i) => _ =>
         {
-            if (IsOwner) ServerRpcEquipWeapons(i);
-        };
-
-        private int NameToIndex(string name)
-        {
-            for (var i = 0; i < registeredWeapons.Count; i++)
+            if (IsOwner)
             {
-                var other = registeredWeapons[i].name;
-                if (other != name) continue;
-                return i;
+                var index = equippedWeapons[i];
+                if (index != currentWeaponIndex) ServerRpcEquipWeapons(index);
             }
-
-            return -1;
-        }
+        };
 
         [ServerRpc]
         private void ServerRpcEquipWeapons(int i)
@@ -80,10 +72,8 @@ namespace Zombies.Runtime.Player
 
         private void EquipWeapons(int i)
         {
-            if (i == currentWeaponIndex) return;
-
             if (CurrentWeapon) CurrentWeapon.Unequip();
-            currentWeaponIndex = i >= 0 && i < equippedWeapons.Length ? NameToIndex(equippedWeapons[i]) : -1;
+            currentWeaponIndex = i;
             if (CurrentWeapon) CurrentWeapon.Equip();
         }
     }
