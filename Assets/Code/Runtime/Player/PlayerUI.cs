@@ -1,8 +1,8 @@
 ﻿using TMPro;
 using UnityEngine;
-using Zombies.Runtime.Utility;
+using Framework.Runtime.Utility;
 
-namespace Zombies.Runtime.Player
+namespace Framework.Runtime.Player
 {
     [SelectionBase, DisallowMultipleComponent]
     public class PlayerUI : MonoBehaviour

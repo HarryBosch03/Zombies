@@ -1,9 +1,9 @@
+using Framework.Runtime.Npc.StateMachines;
+using Framework.Runtime.Vitality;
 using UnityEngine;
-using Zombies.Runtime.Npc.StateMachines;
-using Zombies.Runtime.Vitality;
-using Zombies.Runtime.Utility;
+using Framework.Runtime.Utility;
 
-namespace Zombies.Runtime.Npc.Enemies.States
+namespace Framework.Runtime.Npc.Enemies.States
 {
     [System.Serializable]
     public class MeleeAttackBehaviour : State<BipedalNpc>

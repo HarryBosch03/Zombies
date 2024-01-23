@@ -1,10 +1,10 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using Framework.Runtime.Vitality;
 using UnityEngine;
-using Zombies.Runtime.Vitality;
 
-namespace Zombies.Runtime.Utility
+namespace Framework.Runtime.Utility
 {
     public static class Extension
     {
@@ -24,6 +24,17 @@ namespace Zombies.Runtime.Utility
         {
             var find = transform.Find(path);
             return find ? find.gameObject : null;
+        }
+
+        public static Transform DeepFind(this Transform transform, string name)
+        {
+            if (transform.name == name) return transform;
+            foreach (Transform child in transform)
+            {
+                var r = child.DeepFind(name);
+                if (r) return r;
+            }
+            return null;
         }
 
         public static T Best<T>(this IEnumerable<T> list, Func<T, float> scoreCallback, T fallback = default)

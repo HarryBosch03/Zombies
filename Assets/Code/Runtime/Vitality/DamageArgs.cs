@@ -1,5 +1,5 @@
 ﻿
-namespace Zombies.Runtime.Vitality
+namespace Framework.Runtime.Vitality
 {
     [System.Serializable]
     public class DamageArgs

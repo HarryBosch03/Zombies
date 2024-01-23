@@ -2,11 +2,11 @@ using System.Linq;
 using FishNet;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
+using Framework.Runtime.Vitality;
 using UnityEngine;
-using Zombies.Runtime.Utility;
-using Zombies.Runtime.Vitality;
+using Framework.Runtime.Utility;
 
-namespace Zombies.Runtime.Projectiles
+namespace Framework.Runtime.Projectiles
 {
     public class Projectile : MonoBehaviour
     {

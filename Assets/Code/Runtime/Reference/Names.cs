@@ -1,4 +1,4 @@
-namespace Zombies.Runtime
+namespace Framework.Runtime
 {
     public static partial class Reference
     {

@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using FishNet.Object;
+using Framework.Runtime.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Zombies.Runtime.Core;
 
-namespace Zombies.Runtime.Player
+namespace Framework.Runtime.Player
 {
     [RequireComponent(typeof(PlayerMovement))]
     public class PlayerController : NetworkBehaviour, IPersonality

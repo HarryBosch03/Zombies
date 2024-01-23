@@ -15,7 +15,8 @@ MonoBehaviour:
   m_Active: 1
   viewportOverlaySettings:
     height: 135
-    fieldOfView: 50
+    overrideFov: 1
+    fieldOfView: 60
     nearClip: 0.01
     farClip: 2
 --- !u!114 &11400000

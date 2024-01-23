@@ -1,4 +1,4 @@
-﻿namespace Zombies.Runtime.Vitality
+﻿namespace Framework.Runtime.Vitality
 {
     public interface IDamageable
     {

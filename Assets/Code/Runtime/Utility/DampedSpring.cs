@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace Zombies.Runtime.Utility
+namespace Framework.Runtime.Utility
 {
     [System.Serializable]
     public class DampedSpring

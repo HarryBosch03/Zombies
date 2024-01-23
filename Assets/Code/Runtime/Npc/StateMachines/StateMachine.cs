@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Zombies.Runtime.Npc.StateMachines
+namespace Framework.Runtime.Npc.StateMachines
 {
     public class StateMachine<T>
     {

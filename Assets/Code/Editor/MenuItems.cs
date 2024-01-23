@@ -2,7 +2,7 @@ using System.Diagnostics;
 using UnityEditor;
 using UnityEngine;
 
-namespace Zombies.Editor
+namespace Framework.Editor
 {
     public static class MenuItems
     {

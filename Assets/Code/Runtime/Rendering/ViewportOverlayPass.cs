@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace Zombies.Runtime.Rendering
+namespace Framework.Runtime.Rendering
 {
     public class ViewportOverlayPass : ScriptableRenderPass
     {
@@ -14,7 +14,9 @@ namespace Zombies.Runtime.Rendering
         private int rtHandle = Shader.PropertyToID("_ViewportOverlay");
 
         private List<ShaderTagId> shaderTagIdList;
-        
+
+        public static float ViewportFieldOfView { get; set; }
+
         public ViewportOverlayPass(Settings settings)
         {
             this.settings = settings;
@@ -25,7 +27,7 @@ namespace Zombies.Runtime.Rendering
                 overlayMaterial = new Material(Shader.Find("Hidden/ViewportOverlay"));
                 overlayMaterial.hideFlags = HideFlags.HideAndDontSave;
             }
-            
+
             if (!clearMaterial)
             {
                 clearMaterial = new Material(Shader.Find("Hidden/Clear"));
@@ -70,7 +72,7 @@ namespace Zombies.Runtime.Rendering
             descriptor.width = Mathf.RoundToInt(settings.height * aspect);
             descriptor.height = settings.height;
             descriptor.colorFormat = RenderTextureFormat.ARGB32;
-            
+
             cmd.GetTemporaryRT(rtHandle, descriptor);
         }
 
@@ -78,25 +80,29 @@ namespace Zombies.Runtime.Rendering
         {
             var cmd = CommandBufferPool.Get("ViewportOverlay");
             cmd.Clear();
-            
+
             cmd.SetRenderTarget(rtHandle);
             cmd.ClearRenderTarget(true, false, Color.clear);
 
             cmd.DrawMesh(mesh, Matrix4x4.identity, clearMaterial, 0, 0);
 
             var camera = renderingData.cameraData.camera;
-            var projectionMatrix = Matrix4x4.Perspective(settings.fieldOfView, camera.aspect, settings.nearClip, settings.farClip);
-            projectionMatrix = GL.GetGPUProjectionMatrix(projectionMatrix, renderingData.cameraData.IsCameraProjectionMatrixFlipped());
-            
-            var viewMatrix = renderingData.cameraData.GetViewMatrix();
-            RenderingUtils.SetViewAndProjectionMatrices(cmd, viewMatrix, projectionMatrix, false);
+
+            if (settings.overrideFov)
+            {
+                var projectionMatrix = Matrix4x4.Perspective(ViewportFieldOfView, camera.aspect, settings.nearClip, settings.farClip);
+                projectionMatrix = GL.GetGPUProjectionMatrix(projectionMatrix, renderingData.cameraData.IsCameraProjectionMatrixFlipped());
+
+                var viewMatrix = renderingData.cameraData.GetViewMatrix();
+                RenderingUtils.SetViewAndProjectionMatrices(cmd, viewMatrix, projectionMatrix, false);
+            }
 
             var filteringSettings = new FilteringSettings(RenderQueueRange.opaque, 1 << Layers.Viewport);
             var drawingSettings = CreateDrawingSettings(shaderTagIdList, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
 
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
-            
+
             context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings);
 
             cmd.SetRenderTarget(renderingData.cameraData.renderer.cameraColorTargetHandle);
@@ -105,27 +111,21 @@ namespace Zombies.Runtime.Rendering
 
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
-            
+
             CommandBufferPool.Release(cmd);
         }
 
-        public override void OnCameraCleanup(CommandBuffer cmd)
-        {
-            cmd.ReleaseTemporaryRT(rtHandle);
-        }
+        public override void OnCameraCleanup(CommandBuffer cmd) { cmd.ReleaseTemporaryRT(rtHandle); }
 
         [System.Serializable]
         public struct Settings
         {
             public int height;
-            public float fieldOfView;
+            public bool overrideFov;
             public float nearClip;
             public float farClip;
 
-            public void Validate()
-            {
-                height = Mathf.Max(2, height);
-            }
+            public void Validate() { height = Mathf.Max(2, height); }
         }
     }
 }

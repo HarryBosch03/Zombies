@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using Zombies.Runtime.Npc.StateMachines;
+﻿using Framework.Runtime.Npc.StateMachines;
+using UnityEngine;
 
-namespace Zombies.Runtime.Npc
+namespace Framework.Runtime.Npc
 {
     public abstract class NpcBehaviour<T> : MonoBehaviour
     {

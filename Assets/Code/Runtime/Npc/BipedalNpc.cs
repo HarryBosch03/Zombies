@@ -1,9 +1,9 @@
-﻿using UnityEngine;
+﻿using Framework.Runtime.Core;
+using Framework.Runtime.Vitality;
+using UnityEngine;
 using UnityEngine.AI;
-using Zombies.Runtime.Core;
-using Zombies.Runtime.Vitality;
 
-namespace Zombies.Runtime.Npc
+namespace Framework.Runtime.Npc
 {
     [RequireComponent(typeof(PlayerMovement), typeof(HealthController))]
     [SelectionBase, DisallowMultipleComponent]

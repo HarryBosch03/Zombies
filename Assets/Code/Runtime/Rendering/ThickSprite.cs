@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Zombies.Runtime.Rendering
+namespace Framework.Runtime.Rendering
 {
     [ExecuteAlways]
     [SelectionBase, DisallowMultipleComponent]

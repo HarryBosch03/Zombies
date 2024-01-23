@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using Zombies.Runtime.Vitality;
+﻿using Framework.Runtime.Vitality;
+using UnityEngine;
 
-namespace Zombies.Runtime.Projectiles
+namespace Framework.Runtime.Projectiles
 {
     [System.Serializable]
     public class ProjectileSpawnArgs

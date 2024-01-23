@@ -1,10 +1,10 @@
 using System;
 using FishNet.Object;
+using Framework.Runtime.Core;
 using UnityEngine;
-using Zombies.Runtime.Core;
-using Zombies.Runtime.Utility;
+using Framework.Runtime.Utility;
 
-namespace Zombies.Runtime.Player
+namespace Framework.Runtime.Player
 {
     [RequireComponent(typeof(PlayerController))]
     public class PlayerCameraAnimator : NetworkBehaviour
@@ -24,6 +24,7 @@ namespace Zombies.Runtime.Player
         public PlayerMovement Biped => controller.Biped;
         public float FunctionalZoom { get; set; } = 1.0f;
         public float EffectZoom { get; set; } = 1.0f;
+        public Quaternion RotationOffset { get; set; }
 
         private void Awake()
         {
@@ -79,11 +80,13 @@ namespace Zombies.Runtime.Player
             position += rotation * Vector3.Lerp(Vector3.zero, pose.position, weight);
             rotation *= Quaternion.Lerp(Quaternion.identity, pose.rotation, weight);
 
+            rotation *= RotationOffset;
+            
             smoothedPosition = Vector3.Lerp(position, smoothedPosition, Time.deltaTime * settings.poseSmoothing);
             smoothedRotation = Quaternion.Slerp(rotation, smoothedRotation, Time.deltaTime * settings.poseSmoothing);
 
             if (!IsOwner) return;
-            
+
             var cam = mainCamera.transform;
             cam.position = smoothedPosition;
             cam.rotation = smoothedRotation;

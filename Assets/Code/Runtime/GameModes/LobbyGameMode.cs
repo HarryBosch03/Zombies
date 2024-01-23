@@ -1,8 +1,8 @@
 using System;
 using FishNet.Transporting;
-using Zombies.Runtime.Player;
+using Framework.Runtime.Player;
 
-namespace Zombies.Runtime.GameModes
+namespace Framework.Runtime.GameModes
 {
     public class LobbyGameMode : GameMode
     {

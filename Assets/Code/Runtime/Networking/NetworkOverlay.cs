@@ -1,7 +1,7 @@
 using FishNet.Managing;
 using UnityEngine;
 
-namespace Zombies.Runtime.Networking
+namespace Framework.Runtime.Networking
 {
     [RequireComponent(typeof(NetworkManager))]
     public class NetworkOverlay : MonoBehaviour

@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using FishNet.Object;
+using Framework.Runtime.Player;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Zombies.Runtime.Player
+namespace Framework.Runtime.Player
 {
     [RequireComponent(typeof(PlayerController))]
     public class PlayerWeaponManager : NetworkBehaviour

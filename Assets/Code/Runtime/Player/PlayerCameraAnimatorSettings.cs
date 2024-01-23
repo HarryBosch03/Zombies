@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace Zombies.Runtime.Player
+namespace Framework.Runtime.Player
 {
     [CreateAssetMenu(menuName = "ScriptableObjects/Config/Player/PlayerCameraAnimatorSettings")]
     public class PlayerCameraAnimatorSettings : ScriptableObject

@@ -1,9 +1,9 @@
-﻿using UnityEngine;
-using Zombies.Runtime.Core;
-using Zombies.Runtime.Npc.StateMachines;
-using Zombies.Runtime.Projectiles;
+﻿using Framework.Runtime.Core;
+using Framework.Runtime.Npc.StateMachines;
+using Framework.Runtime.Projectiles;
+using UnityEngine;
 
-namespace Zombies.Runtime.Npc.Enemies.States
+namespace Framework.Runtime.Npc.Enemies.States
 {
     [System.Serializable]
     public class ShootAtAgro : State<BipedalNpc>

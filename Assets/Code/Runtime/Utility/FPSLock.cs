@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Zombies.Runtime.Utility
+namespace Framework.Runtime.Utility
 {
     public class FPSLock : MonoBehaviour
     {

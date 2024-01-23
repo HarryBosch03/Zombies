@@ -1,7 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 
-namespace Zombies.Runtime.Vitality
+namespace Framework.Runtime.Vitality
 {
     [SelectionBase, DisallowMultipleComponent]
     public class Dummy : HealthController

@@ -1,7 +1,7 @@
 ﻿
 using UnityEngine;
 
-namespace Zombies.Runtime.Vitality
+namespace Framework.Runtime.Vitality
 {
     public class DamageInstance
     {

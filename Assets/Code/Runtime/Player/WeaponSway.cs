@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Zombies.Runtime.Player
+namespace Framework.Runtime.Player
 {
     public class WeaponSway : MonoBehaviour
     {

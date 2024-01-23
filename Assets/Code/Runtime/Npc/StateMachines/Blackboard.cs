@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace Zombies.Runtime.Npc.StateMachines
+namespace Framework.Runtime.Npc.StateMachines
 {
     public class Blackboard
     {

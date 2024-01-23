@@ -1,7 +1,7 @@
-﻿using Zombies.Runtime.Npc.Enemies.States;
-using Zombies.Runtime.Npc.StateMachines;
+﻿using Framework.Runtime.Npc.Enemies.States;
+using Framework.Runtime.Npc.StateMachines;
 
-namespace Zombies.Runtime.Npc.Enemies.Behaviours
+namespace Framework.Runtime.Npc.Enemies.Behaviours
 {
     public class Brian : NpcBehaviour<BipedalNpc>
     {

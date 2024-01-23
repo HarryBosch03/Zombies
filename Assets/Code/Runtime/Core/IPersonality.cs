@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Zombies.Runtime.Core
+namespace Framework.Runtime.Core
 {
     public interface IPersonality
     {

@@ -1,6 +1,6 @@
 using FishNet.Object;
 
-namespace Zombies.Runtime.GameModes
+namespace Framework.Runtime.GameModes
 {
     public class GameMode : NetworkBehaviour
     {

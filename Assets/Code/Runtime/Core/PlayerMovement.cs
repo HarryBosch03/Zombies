@@ -1,9 +1,9 @@
 ﻿using FishNet.Object;
 using UnityEngine;
 using UnityEngine.Serialization;
-using Zombies.Runtime.Utility;
+using Framework.Runtime.Utility;
 
-namespace Zombies.Runtime.Core
+namespace Framework.Runtime.Core
 {
     [SelectionBase]
     [DisallowMultipleComponent]

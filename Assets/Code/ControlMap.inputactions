@@ -33,6 +33,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Aim",
+                    "type": "Button",
+                    "id": "a75f31dc-848c-476c-b894-712b4d13c6b6",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Weapon.1",
                     "type": "Button",
                     "id": "e4ab874c-730d-409e-8b0a-be918542decc",
@@ -148,6 +157,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Weapon.2",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "82ffebb4-b658-4bcb-97a0-0a40b57fd0fd",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Aim",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

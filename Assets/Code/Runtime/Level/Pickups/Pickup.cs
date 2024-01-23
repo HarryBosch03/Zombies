@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Zombies.Runtime.Level.Pickups
+namespace Framework.Runtime.Level.Pickups
 {
     public class Pickup : MonoBehaviour
     {

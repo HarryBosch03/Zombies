@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace Zombies.Runtime.VFX
+namespace Framework.Runtime.VFX
 {
     [SelectionBase, DisallowMultipleComponent]
     public sealed class GunHitDecal : MonoBehaviour

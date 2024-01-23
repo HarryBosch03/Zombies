@@ -1,4 +1,4 @@
-﻿namespace Zombies.Runtime.Npc.StateMachines
+﻿namespace Framework.Runtime.Npc.StateMachines
 {
     public abstract class State<T>
     {

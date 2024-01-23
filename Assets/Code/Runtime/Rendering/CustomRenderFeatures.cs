@@ -1,8 +1,8 @@
 using UnityEngine.Rendering.Universal;
 
-namespace Zombies.Runtime.Rendering
+namespace Framework.Runtime.Rendering
 {
-    public class RuckusRenderFeatures : ScriptableRendererFeature
+    public class CustomRenderFeatures : ScriptableRendererFeature
     {
         public ViewportOverlayPass.Settings viewportOverlaySettings;
 

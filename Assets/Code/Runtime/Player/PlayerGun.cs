@@ -1,9 +1,10 @@
 using FishNet.Object;
+using Framework.Runtime.Player;
+using Framework.Runtime.Projectiles;
 using UnityEngine;
-using Zombies.Runtime.Projectiles;
-using Zombies.Runtime.Utility;
+using Framework.Runtime.Utility;
 
-namespace Zombies.Runtime.Player
+namespace Framework.Runtime.Player
 {
     public class PlayerGun : PlayerWeapon
     {
@@ -11,6 +12,9 @@ namespace Zombies.Runtime.Player
         public ProjectileSpawnArgs args;
         public bool singleFire = false;
         public float fireRate = 180.0f;
+        public float aimTime = 0.15f;
+        public float aimFov = 15.0f;
+        public bool forceAim;
 
         [Space]
         public int ammo;
@@ -20,7 +24,6 @@ namespace Zombies.Runtime.Player
         public Vector3 muzzleOffset;
 
         private PlayerController player;
-        private Animator animator;
         private bool shootFlag;
         private float lastFireTime;
 
@@ -31,14 +34,15 @@ namespace Zombies.Runtime.Player
 
         public override string AmmoLabel => ammo >= 0 ? $"{ammo}/{maxAmmo}" : "--/--";
         public Vector3 MuzzlePosition => (MainCam ? MainCam.transform : transform).TransformPoint(muzzleOffset);
+        public float AimPercent { get; private set; }
+
+        public override float ViewportFieldOfView => Mathf.Lerp(base.ViewportFieldOfView, aimFov, AimPercent);
 
         protected override void Awake()
         {
             player = GetComponentInParent<PlayerController>();
 
             base.Awake();
-
-            animator = viewport.GetComponentInChildren<Animator>();
 
             flash = viewport.Find<ParticleSystem>("Flash");
             smoke = viewport.Find<ParticleSystem>("Smoke");
@@ -53,12 +57,6 @@ namespace Zombies.Runtime.Player
                 if (Player.ShootAction.WasPressedThisFrame()) shootFlag = true;
             }
             else shootFlag = Player.ShootAction.IsPressed();
-
-            if (animator)
-            {
-                animator.SetFloat("movement", Player.Biped.Movement);
-                animator.SetBool("isOnGround", Player.Biped.IsOnGround);
-            }
         }
 
         private void FixedUpdate()
@@ -69,6 +67,10 @@ namespace Zombies.Runtime.Player
                 {
                     Shoot();
                 }
+
+                var aiming = Player.AimAction.IsPressed() || forceAim;
+                AimPercent += (aiming ? 1 : -1) / aimTime * Time.deltaTime;
+                AimPercent = Mathf.Clamp01(AimPercent);
             }
             
             ResetFlags();
@@ -84,7 +86,6 @@ namespace Zombies.Runtime.Player
             projectile.SpawnFromPrefab(player.gameObject, args, MuzzlePosition, direction);
             ServerRpcShoot(MuzzlePosition, direction);
 
-            if (animator) animator.Play("Shoot", 0, 0.0f);
             if (flash) flash.Play();
             if (smoke && !smoke.isPlaying) smoke.Play();
 

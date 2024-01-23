@@ -1,26 +1,35 @@
-using System;
 using FishNet.Object;
 using UnityEngine;
-using Zombies.Runtime.Utility;
+using Framework.Runtime.Player;
+using Framework.Runtime.Rendering;
+using Framework.Runtime.Utility;
 
-namespace Zombies.Runtime.Player
+namespace Framework.Runtime.Player
 {
     public abstract class PlayerWeapon : NetworkBehaviour
     {
+        [Range(10.0f, 120.0f)]
+        public float viewportFov = 50.0f;
+
         public const int ViewportLayer = 3;
 
         public bool isOwner;
-        
+
+        [HideInInspector] public Transform leftHandHold;
+        [HideInInspector] public Transform rightHandHold;
+
         protected GameObject model;
         protected Transform viewport;
-        
+
         public Camera MainCam { get; private set; }
         public PlayerController Player { get; private set; }
-        
+
         public virtual string DisplayName => name;
         public abstract string AmmoLabel { get; }
         public bool Equipped { get; private set; }
-        
+
+        public virtual float ViewportFieldOfView => viewportFov;
+
         protected virtual void Awake()
         {
             MainCam = Camera.main;
@@ -28,36 +37,34 @@ namespace Zombies.Runtime.Player
 
             viewport = transform.Find("Viewport");
             model = viewport.FindGameObject("Model");
-            
+
+            leftHandHold = transform.DeepFind("Hand.L");
+            rightHandHold = transform.DeepFind("Hand.R");
+
             foreach (var t in viewport.GetComponentsInChildren<Transform>())
             {
                 t.gameObject.layer = ViewportLayer;
             }
         }
 
-        private void OnEnable()
-        {
-            SetEquipState(false);
-        }
+        private void OnEnable() { SetEquipState(false); }
 
         protected virtual void Update()
         {
             isOwner = IsOwner;
-            
-            if (Equipped) UpdateEquipped();
+
+            if (Equipped)
+            {
+                UpdateEquipped();
+                ViewportOverlayPass.ViewportFieldOfView = ViewportFieldOfView;
+            }
         }
 
         protected virtual void UpdateEquipped() { }
 
-        public void Equip()
-        {
-            SetEquipState(true);
-        }
+        public void Equip() { SetEquipState(true); }
 
-        public void Unequip()
-        {
-            SetEquipState(false);
-        }
+        public void Unequip() { SetEquipState(false); }
 
         private void SetEquipState(bool state)
         {

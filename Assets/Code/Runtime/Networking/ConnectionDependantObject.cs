@@ -1,7 +1,7 @@
 using FishNet.Connection;
 using FishNet.Object;
 
-namespace Zombies.Runtime.Networking
+namespace Framework.Runtime.Networking
 {
     public class ConnectionDependantObject : NetworkBehaviour
     {

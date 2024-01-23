@@ -8,7 +8,7 @@ using UnityEngine;
 using Unity.EditorCoroutines.Editor;
 #endif
 
-namespace Zombies.Runtime.Navigation
+namespace Framework.Runtime.Navigation
 {
     [SelectionBase]
     [DisallowMultipleComponent]

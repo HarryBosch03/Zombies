@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using FishNet;
+using Framework.Runtime.Player;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Zombies.Runtime.Player;
-using Zombies.Runtime.Utility;
+using Framework.Runtime.Utility;
 
-namespace Zombies.Runtime.Menu
+namespace Framework.Runtime.Menu
 {
     [SelectionBase]
     [DisallowMultipleComponent]
