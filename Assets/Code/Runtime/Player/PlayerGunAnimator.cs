@@ -56,7 +56,7 @@ namespace Framework.Runtime.Player
         private void OnEnable()
         {
             PlayerGun.ShootEvent += OnGunShoot;
-            translationPid.position = Biped.view.TransformVector(localHoldPosition);
+            translationPid.position = Vector3.zero;
             rotationPid.position = Biped.view.eulerAngles;
         }
 
@@ -91,7 +91,7 @@ namespace Framework.Runtime.Player
         {
             var localPosition = Vector3.Lerp(localHoldPosition, localAimPosition, gun.AimPercent);
             
-            var holdPosition = Biped.view.TransformVector(localPosition);
+            var holdPosition = localPosition;
             rotationPid.isRotation = true;
 
             if (reset)
@@ -101,27 +101,27 @@ namespace Framework.Runtime.Player
                 rotationPid.Reset();
             }
 
-            var offset = Biped.body.velocity * translationSway;
+            var offset = Biped.view.InverseTransformVector(Biped.body.velocity) * translationSway;
 
             viewDelta = Vector3.zero;
 
             translationPid.force += offset;
 
             translationPid.Update(holdPosition, Time.deltaTime);
-            rotationPid.Update(Biped.view.eulerAngles, Time.deltaTime);
+            rotationPid.Update(Vector2.zero, Time.deltaTime);
         }
 
         private void Update()
         {
             if (gun.Equipped)
             {
-                Camera.RotationOffset = Quaternion.Slerp(Quaternion.identity, rotationPid.position.Euler() * Quaternion.Inverse(Biped.view.rotation), cameraInfluence);
+                Camera.RotationOffset = Quaternion.Slerp(Quaternion.identity, rotationPid.position.Euler(), cameraInfluence);
             }
         }
 
         private Vector3 GetFinalPosition()
         {
-            var position = translationPid.InterpolatedPosition;
+            var position = Biped.view.TransformVector(translationPid.InterpolatedPosition);
             position += root.parent.position;
             return position;
         }
@@ -135,7 +135,7 @@ namespace Framework.Runtime.Player
 
             var localRotation = Vector3.Lerp(localHoldRotation, localAimRotation, gun.AimPercent);
 
-            var rotation = Quaternion.Euler(rotationPid);
+            var rotation = Biped.view.rotation * Quaternion.Euler(rotationPid);
             root.rotation = rotation * Quaternion.Euler(localRotation);
         }
     }
