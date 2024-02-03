@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c812ed1a561b4070b4789b778353ffac, type: 3}
+  m_Name: Pistol-Statsheet
+  m_EditorClassIdentifier: 
+  projectile: {fileID: 1202828691346312600, guid: 1f492ab9d5d6cf644a3ea6c772a7ff81, type: 3}
+  args:
+    damage:
+      damage: 14
+      ignoreLocationalDamage: 0
+    speed: 600
+    lifetime: 2
+    gravityScale: 1
+    pierce: 0
+    spread: 0
+    count: 1
+  singleFire: 1
+  fireRate: 700
+  aimTime: 0.15
+  maxAmmo: 15
+  ammoReloadedPerLoop: 0
+  preReloadDuration: 0
+  reloadLoopDuration: 1
+  postReloadDuration: 0
+  equipTime: 0.2

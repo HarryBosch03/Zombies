@@ -1,6 +1,5 @@
 using FishNet.Object;
 using UnityEngine;
-using Framework.Runtime.Player;
 using Framework.Runtime.Rendering;
 using Framework.Runtime.Utility;
 
@@ -62,9 +61,20 @@ namespace Framework.Runtime.Player
 
         protected virtual void UpdateEquipped() { }
 
-        public void Equip() { SetEquipState(true); }
+        public void Equip(object args = null)
+        {
+            SetEquipState(true);
+            OnEquip();
+        }
 
-        public void Unequip() { SetEquipState(false); }
+        public void Unequip()
+        {
+            SetEquipState(false);
+            OnUnequip();
+        }
+        
+        public virtual void OnEquip() { }
+        public virtual void OnUnequip() { }
 
         private void SetEquipState(bool state)
         {

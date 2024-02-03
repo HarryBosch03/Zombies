@@ -42,6 +42,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Reload",
+                    "type": "Button",
+                    "id": "d09f6f3d-03c1-4fdc-9625-4002591dadc9",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Weapon.1",
                     "type": "Button",
                     "id": "e4ab874c-730d-409e-8b0a-be918542decc",
@@ -54,6 +63,15 @@
                     "name": "Weapon.2",
                     "type": "Button",
                     "id": "2d1e32c4-29d1-4e41-8600-28c23d8669d4",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Interact",
+                    "type": "Button",
+                    "id": "033fea56-6c76-446f-9117-c4403e87dbc4",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -151,6 +169,17 @@
                 },
                 {
                     "name": "",
+                    "id": "db5528a5-c363-4ef0-b345-58f194ece4cc",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Weapon.1",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "c940c27d-8ad1-4c8c-90b0-24d4cfa6c57b",
                     "path": "<Keyboard>/2",
                     "interactions": "",
@@ -168,6 +197,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Aim",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "aa85efbf-aed0-43da-bb31-7fa1491f0667",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Reload",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "32914827-ff81-4960-a67a-fbcfa08b0a23",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Interact",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -20,6 +20,7 @@ namespace Framework.Runtime.Player
         public InputAction ShootAction { get; private set; }
         public InputAction AimAction { get; private set; }
         public InputAction ReloadAction { get; private set; }
+        public InputAction InteractAction { get; set; }
         public PlayerMovement Biped { get; private set; }
         public Vector2 ViewInput { get; private set; }
         public Vector3 LookTarget => Biped.Center;
@@ -35,6 +36,7 @@ namespace Framework.Runtime.Player
             ShootAction = inputAsset.FindAction("Shoot");
             AimAction = inputAsset.FindAction("Aim");
             ReloadAction = inputAsset.FindAction("Reload");
+            InteractAction = inputAsset.FindAction("Interact");
         }
 
         private void OnEnable()
@@ -88,8 +90,6 @@ namespace Framework.Runtime.Player
             delta += Mouse.current.delta.ReadValue() * mouseSensitivity * Mathf.Min(1.0f, Time.timeScale);
             Biped.viewRotation += delta;
             ViewInput = delta;
-
-            ViewInput = Vector2.zero;
 
             if (JumpAction.WasPressedThisFrame()) jumpFlag = true;
         }

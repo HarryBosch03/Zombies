@@ -19,7 +19,7 @@ namespace Framework.Runtime.Projectiles
         private Vector3 velocity;
         private Vector3 force;
 
-        private float age;
+        private int age;
         private int pierce;
 
         private GameObject owner;
@@ -34,6 +34,7 @@ namespace Framework.Runtime.Projectiles
             if (hitFX) hitFX.SetActive(false);
 
             trail = transform.Find<ParticleSystem>("Trail");
+            trail.gameObject.SetActive(false);
         }
 
         public void SpawnFromPrefab(GameObject owner, ProjectileSpawnArgs args, Vector3 position, Vector3 direction)
@@ -86,9 +87,10 @@ namespace Framework.Runtime.Projectiles
 
         private void UpdateAge()
         {
-            if (age > args.lifetime) Despawn(null);
-
-            age += Time.deltaTime;
+            if (age > args.lifetime / Time.fixedDeltaTime) Despawn(null);
+            age++;
+            
+            if (age == 1) trail.gameObject.SetActive(true);
         }
 
         private void Collide()

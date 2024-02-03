@@ -88,7 +88,7 @@ namespace Framework.Runtime.Rendering
 
             var camera = renderingData.cameraData.camera;
 
-            if (settings.overrideFov)
+            if (settings.overrideFov && !renderingData.cameraData.isSceneViewCamera)
             {
                 var projectionMatrix = Matrix4x4.Perspective(ViewportFieldOfView, camera.aspect, settings.nearClip, settings.farClip);
                 projectionMatrix = GL.GetGPUProjectionMatrix(projectionMatrix, renderingData.cameraData.IsCameraProjectionMatrixFlipped());

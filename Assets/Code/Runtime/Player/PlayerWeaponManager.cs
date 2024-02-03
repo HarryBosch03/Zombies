@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using FishNet.Object;
-using Framework.Runtime.Player;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,8 +9,9 @@ namespace Framework.Runtime.Player
     [RequireComponent(typeof(PlayerController))]
     public class PlayerWeaponManager : NetworkBehaviour
     {
+        public const int MaxEquippedWeapons = 2;
+
         public int[] equippedWeapons;
-        public int maxEquippedWeapons = 10;
 
         private PlayerController player;
         private int currentWeaponIndex;
@@ -32,7 +32,7 @@ namespace Framework.Runtime.Player
             }
 
             var inputAsset = player.inputAsset;
-            for (var i = 0; i < maxEquippedWeapons; i++)
+            for (var i = 0; i < MaxEquippedWeapons; i++)
             {
                 var action = inputAsset.FindAction($"Weapon.{i + 1}");
                 if (action == null) continue;
@@ -57,25 +57,46 @@ namespace Framework.Runtime.Player
             if (IsOwner)
             {
                 var index = equippedWeapons[i];
-                if (index != currentWeaponIndex) ServerRpcEquipWeapons(index);
+                if (index != currentWeaponIndex) ServerRpcSwitchWeapon(index);
             }
         };
 
         [ServerRpc]
-        private void ServerRpcEquipWeapons(int i)
+        private void ServerRpcSwitchWeapon(int i)
         {
-            EquipWeapons(i);
-            ObserverRpcEquipWeapons(i);
+            SwitchWeapon(i);
+            ObserverRpcSwitchWeapon(i);
         }
-        
-        [ObserversRpc]
-        private void ObserverRpcEquipWeapons(int i) => EquipWeapons(i);
 
-        private void EquipWeapons(int i)
+        [ObserversRpc]
+        private void ObserverRpcSwitchWeapon(int i) => SwitchWeapon(i);
+
+        private void SwitchWeapon(int i)
         {
             if (CurrentWeapon) CurrentWeapon.Unequip();
             currentWeaponIndex = i;
             if (CurrentWeapon) CurrentWeapon.Equip();
+        }
+
+        public void EquipWeapon(string name, object args)
+        {
+            var index = -1;
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                for (var i = 0; i < registeredWeapons.Count; i++)
+                {
+                    var w = registeredWeapons[i];
+                    if (w.name != name) continue;
+
+                    index = i;
+                    break;
+                }
+            }
+
+            if (CurrentWeapon) CurrentWeapon.Unequip();
+            equippedWeapons[currentWeaponIndex] = index;
+            if (CurrentWeapon) CurrentWeapon.Equip(args);
         }
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine.Serialization;
 
 namespace Framework.Runtime.Player
 {
-    [CreateAssetMenu(menuName = "ScriptableObjects/Config/Player/PlayerCameraAnimatorSettings")]
+    [CreateAssetMenu(menuName = "ScriptableObjects/Player/PlayerCameraAnimatorSettings")]
     public class PlayerCameraAnimatorSettings : ScriptableObject
     {
         public PlayerCameraAnimator.SwayPose idlePose;

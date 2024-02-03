@@ -62,6 +62,11 @@ namespace Framework.Runtime.Npc
             }
         }
 
+        public void ClearPath()
+        {
+            navPath.ClearCorners();
+        }
+        
         public void PathTo(Vector3 position)
         {
             if ((position - transform.position).magnitude < PathingThreshold)

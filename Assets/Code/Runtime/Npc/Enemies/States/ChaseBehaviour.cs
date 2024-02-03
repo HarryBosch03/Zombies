@@ -28,6 +28,7 @@ namespace Framework.Runtime.Npc.Enemies.States
             Target.PathTo(agro.transform.position);
             if ((Target.transform.position - agro.transform.position).magnitude < attackRange)
             {
+                Target.ClearPath();
                 sm.ChangeState(next());
             }
         }
