@@ -37,12 +37,12 @@ namespace Framework.Runtime.Projectiles
             trail.gameObject.SetActive(false);
         }
 
-        public void SpawnFromPrefab(GameObject owner, ProjectileSpawnArgs args, Vector3 position, Vector3 direction)
+        public void SpawnFromPrefab(GameObject owner, ProjectileSpawnArgs args, Vector3 position, Vector3 velocity, Vector3 direction)
         {
-            SpawnFromPrefab(owner, args, position, Quaternion.LookRotation(direction));
+            SpawnFromPrefab(owner, args, position, velocity, Quaternion.LookRotation(direction));
         }
         
-        public void SpawnFromPrefab(GameObject owner, ProjectileSpawnArgs args, Vector3 position, Quaternion baseOrientation)
+        public void SpawnFromPrefab(GameObject owner, ProjectileSpawnArgs args, Vector3 position, Vector3 velocity, Quaternion baseOrientation)
         {
             var instances = new Projectile[args.count];
             for (var i = 0; i < args.count; i++)
@@ -54,6 +54,7 @@ namespace Framework.Runtime.Projectiles
                 instance.owner = owner;
                 instance.SetupWithArgs(args);
                 instances[i] = instance;
+                instance.velocity += velocity;
             }
         }
 

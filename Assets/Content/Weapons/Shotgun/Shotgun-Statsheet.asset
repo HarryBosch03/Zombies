@@ -26,6 +26,8 @@ MonoBehaviour:
   singleFire: 1
   fireRate: 120
   aimTime: 0.15
+  muzzleOffset: {x: 0, y: -4.1, z: -67.2}
+  muzzleForwardDirection: {x: 0, y: 0, z: -1}
   maxAmmo: 4
   ammoReloadedPerLoop: 1
   preReloadDuration: 0.2

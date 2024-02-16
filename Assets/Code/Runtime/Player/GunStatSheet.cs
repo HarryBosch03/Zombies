@@ -11,6 +11,8 @@ namespace Framework.Runtime.Player
         public bool singleFire = false;
         public float fireRate = 180.0f;
         public float aimTime = 0.15f;
+        public Vector3 muzzleOffset;
+        public Vector3 muzzleForwardDirection = Vector3.forward;
 
         [Space]
         public int maxAmmo = 1;
