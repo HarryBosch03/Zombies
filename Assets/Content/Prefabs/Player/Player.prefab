@@ -203,10 +203,12 @@ MonoBehaviour:
   downGravity: 3
   stepHeight: 0.6
   heightSmoothing: 0.4
+  viewKinematicsDrag: 20
   moveInput: {x: 0, y: 0, z: 0}
   jump: 0
   view: {fileID: 0}
   viewRotation: {x: 0, y: 0}
+  viewVelocity: {x: 0, y: 0}
   body: {fileID: 0}
 --- !u!54 &7948254126462200293
 Rigidbody:

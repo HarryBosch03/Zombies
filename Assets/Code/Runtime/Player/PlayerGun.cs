@@ -3,6 +3,7 @@ using System.Collections;
 using FishNet.Object;
 using UnityEngine;
 using Framework.Runtime.Utility;
+using Random = UnityEngine.Random;
 
 namespace Framework.Runtime.Player
 {
@@ -18,14 +19,15 @@ namespace Framework.Runtime.Player
         public GunStatSheet stats;
 
         private PlayerController player;
-        private bool shootFlag;
-        private bool reloadFlag;
         private float lastFireTime;
 
         private ParticleSystem flash;
         private ParticleSystem smoke;
         private float equipTime;
 
+        private Vector2 recoilPosition;
+        private Vector2 recoilVelocity;
+        
         public static event System.Action<PlayerGun> ShootEvent;
 
         public override string AmmoLabel => ammo >= 0 ? $"{ammo}/{stats.maxAmmo}" : "--/--";
@@ -58,20 +60,21 @@ namespace Framework.Runtime.Player
             AimPercent = 0.0f;
         }
 
+        protected override void Update()
+        {
+            base.Update();
+
+            player.Biped.viewFrameOffset += recoilPosition;
+        }
+
         protected override void UpdateEquipped()
         {
             if (Time.time - equipTime > stats.equipTime)
             {
-                if (stats.singleFire)
-                {
-                    if (Player.ShootAction.WasPressedThisFrame()) shootFlag = true;
-                }
-                else shootFlag = Player.ShootAction.IsPressed();
-                
                 var aiming = Player.AimAction.IsPressed();
                 if (doForceAim) aiming = true;
                 
-                if (reloadFlag)
+                if (Player.ReloadAction.WasPressedThisFrame())
                 {
                     StartReload();
                 }
@@ -81,7 +84,7 @@ namespace Framework.Runtime.Player
                 }
                 else
                 {
-                    if (shootFlag)
+                    if (stats.singleFire ? Player.ShootAction.WasPressedThisFrame() : Player.ShootAction.IsPressed())
                     {
                         Shoot();
                     }
@@ -89,14 +92,20 @@ namespace Framework.Runtime.Player
 
                 AimPercent += (aiming ? 1 : -1) / stats.aimTime * Time.deltaTime;
                 AimPercent = Mathf.Clamp01(AimPercent);
-                
-                if (Player.ReloadAction.WasPressedThisFrame()) reloadFlag = true;
             }
         }
 
         private void FixedUpdate()
         {
-            ResetFlags();
+            UpdateRecoilKinematics();
+        }
+
+        private void UpdateRecoilKinematics()
+        {
+            var force = -recoilPosition * stats.recoilSpring - recoilVelocity * stats.recoilDamping;
+            
+            recoilPosition += recoilVelocity * Time.deltaTime;
+            recoilVelocity += force * Time.deltaTime;
         }
 
         private void Shoot()
@@ -111,6 +120,12 @@ namespace Framework.Runtime.Player
             if (flash) flash.Play();
             if (smoke && !smoke.isPlaying) smoke.Play();
 
+            recoilVelocity += new Vector2
+            {
+                x = RandomUtils.MedianVariance(stats.viewRecoilMedian.x, stats.viewRecoilVariance.x),
+                y = RandomUtils.MedianVariance(stats.viewRecoilMedian.y, stats.viewRecoilVariance.y),
+            };
+            
             lastFireTime = Time.time;
             ammo--;
 
@@ -189,11 +204,7 @@ namespace Framework.Runtime.Player
                 Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(0.0f, -stats.args.spread, 10.0f).normalized);
             }
         }
-
-        private void ResetFlags()
-        {
-            shootFlag = false;
-            reloadFlag = false;
-        }
+        
+        
     }
 }

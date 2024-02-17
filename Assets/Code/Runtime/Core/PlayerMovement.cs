@@ -26,6 +26,9 @@ namespace Framework.Runtime.Core
         [Range(0.0f, 1.0f)]
         public float heightSmoothing = 0.4f;
 
+        [Space] 
+        public float viewKinematicsDrag = 100.0f;
+
         #endregion
 
         [HideInInspector] public Vector3 moveInput;
@@ -33,6 +36,7 @@ namespace Framework.Runtime.Core
 
         [HideInInspector] public Transform view;
         [HideInInspector] public Vector2 viewRotation;
+        [HideInInspector] public Vector2 viewFrameOffset;
         [HideInInspector] public Rigidbody body;
 
         private float height;
@@ -168,12 +172,15 @@ namespace Framework.Runtime.Core
             viewRotation.x %= 360.0f;
             viewRotation.y = Mathf.Clamp(viewRotation.y, -90.0f, 90.0f);
 
-            body.rotation = Quaternion.Euler(0.0f, viewRotation.x, 0.0f);
+            var final = viewRotation + viewFrameOffset;
+            viewFrameOffset = Vector2.zero;
+            
+            body.rotation = Quaternion.Euler(0.0f, final.x, 0.0f);
 
             view.position = Vector3.Lerp(lastPosition, transform.position, (Time.time - Time.fixedTime) / Time.fixedDeltaTime) + Vector3.up * 1.8f;
-            view.rotation = Quaternion.Euler(-viewRotation.y, viewRotation.x, 0.0f);
+            view.rotation = Quaternion.Euler(-final.y, final.x, 0.0f);
         }
-
+        
         [System.Serializable]
         public struct NetworkState
         {
