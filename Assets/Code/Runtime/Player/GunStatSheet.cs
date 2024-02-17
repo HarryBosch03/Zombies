@@ -23,5 +23,11 @@ namespace Framework.Runtime.Player
 
         [Space]
         public float equipTime = 0.2f;
+
+        [Space] 
+        public Vector2 viewRecoilMedian;
+        public Vector2 viewRecoilVariance;
+        public float recoilSpring;
+        public float recoilDamping;
     }
 }

@@ -34,3 +34,7 @@ MonoBehaviour:
   reloadLoopDuration: 0.4
   postReloadDuration: 0.2
   equipTime: 0.2
+  viewRecoilMedian: {x: 0, y: 0}
+  viewRecoilVariance: {x: 0, y: 0}
+  recoilSpring: 0
+  recoilDamping: 0
