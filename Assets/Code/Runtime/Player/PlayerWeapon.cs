@@ -1,7 +1,11 @@
+using System;
+using System.Linq;
 using FishNet.Object;
 using UnityEngine;
 using Framework.Runtime.Rendering;
 using Framework.Runtime.Utility;
+using UnityEngine.Experimental.Rendering.Universal;
+using UnityEngine.Rendering.Universal;
 
 namespace Framework.Runtime.Player
 {
@@ -19,6 +23,8 @@ namespace Framework.Runtime.Player
 
         protected GameObject model;
         protected Transform viewport;
+
+        private static RenderObjects[] viewportRenderObjects;
 
         public Camera MainCam { get; private set; }
         public PlayerController Player { get; private set; }
@@ -55,7 +61,7 @@ namespace Framework.Runtime.Player
             if (Equipped)
             {
                 UpdateEquipped();
-                ViewportOverlayPass.ViewportFieldOfView = ViewportFieldOfView;
+                Player.ViewportFieldOfView = ViewportFieldOfView;
             }
         }
 

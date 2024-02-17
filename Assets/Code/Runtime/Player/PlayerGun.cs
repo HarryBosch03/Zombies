@@ -13,6 +13,7 @@ namespace Framework.Runtime.Player
         [HideInInspector]
         public float fieldOfView = 50.0f;
         public Transform modelRoot;
+        public bool doForceAim;
 
         public GunStatSheet stats;
 
@@ -28,9 +29,9 @@ namespace Framework.Runtime.Player
         public static event System.Action<PlayerGun> ShootEvent;
 
         public override string AmmoLabel => ammo >= 0 ? $"{ammo}/{stats.maxAmmo}" : "--/--";
-        public Vector3 MuzzlePosition => (modelRoot ? modelRoot.transform : transform).TransformPoint(stats.muzzleOffset * 0.01f);
-        public Quaternion MuzzleOrientation => modelRoot.rotation * Quaternion.LookRotation(stats.muzzleForwardDirection).normalized;
-        public Vector3 MuzzleDirection => MuzzleOrientation * Vector3.forward;
+        public Vector3? MuzzlePosition => modelRoot && stats ? modelRoot.TransformPoint(stats.muzzleOffset * 0.01f) : null;
+        public Quaternion? MuzzleOrientation => modelRoot && stats ? modelRoot.rotation * Quaternion.LookRotation(stats.muzzleForwardDirection).normalized : null;
+        public Vector3? MuzzleDirection => MuzzleOrientation * Vector3.forward;
         public float AimPercent { get; private set; }
         public bool IsReloading { get; private set; }
 
@@ -68,6 +69,8 @@ namespace Framework.Runtime.Player
                 else shootFlag = Player.ShootAction.IsPressed();
                 
                 var aiming = Player.AimAction.IsPressed();
+                if (doForceAim) aiming = true;
+                
                 if (reloadFlag)
                 {
                     StartReload();
@@ -102,8 +105,8 @@ namespace Framework.Runtime.Player
             if (Time.time < lastFireTime + 60.0f / stats.fireRate) return;
             if (ammo == 0) return;
 
-            stats.projectile.SpawnFromPrefab(player.gameObject, stats.args, MuzzlePosition, player.Biped.body.velocity, MuzzleDirection);
-            ServerRpcShoot(MuzzlePosition, player.Biped.body.velocity, MuzzleDirection);
+            stats.projectile.SpawnFromPrefab(player.gameObject, stats.args, MuzzlePosition.Value, player.Biped.body.velocity, MuzzleDirection.Value);
+            ServerRpcShoot(MuzzlePosition.Value, player.Biped.body.velocity, MuzzleDirection.Value);
 
             if (flash) flash.Play();
             if (smoke && !smoke.isPlaying) smoke.Play();
@@ -165,28 +168,32 @@ namespace Framework.Runtime.Player
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.yellow;
-            Gizmos.DrawRay(MuzzlePosition, MuzzleDirection * 0.08f);
+            if (MuzzlePosition != null && MuzzleDirection != null && MuzzleOrientation != null)
+            {
+                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleDirection.Value * 0.08f);
+                Gizmos.DrawRay(MuzzlePosition.Value + MuzzleDirection.Value * 0.08f, MuzzleOrientation.Value * new Vector3(0.0f, 1.0f, -1.0f).normalized * 0.02f);
+                Gizmos.DrawRay(MuzzlePosition.Value + MuzzleDirection.Value * 0.08f, MuzzleOrientation.Value * new Vector3(1.0f, -1.0f, -1.0f).normalized * 0.02f);
+                Gizmos.DrawRay(MuzzlePosition.Value + MuzzleDirection.Value * 0.08f, MuzzleOrientation.Value * new Vector3(-1.0f, -1.0f, -1.0f).normalized * 0.02f);
+            }
         }
 
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.yellow;
-            
-            Gizmos.DrawRay(MuzzlePosition, MuzzleOrientation * new Vector3(stats.args.spread, 0.0f, 10.0f).normalized);
-            Gizmos.DrawRay(MuzzlePosition, MuzzleOrientation * new Vector3(-stats.args.spread, 0.0f, 10.0f).normalized);
-            Gizmos.DrawRay(MuzzlePosition, MuzzleOrientation * new Vector3(0.0f, stats.args.spread, 10.0f).normalized);
-            Gizmos.DrawRay(MuzzlePosition, MuzzleOrientation * new Vector3(0.0f, -stats.args.spread, 10.0f).normalized);
+
+            if (MuzzlePosition != null && MuzzleOrientation != null && stats)
+            {
+                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(stats.args.spread, 0.0f, 10.0f).normalized);
+                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(-stats.args.spread, 0.0f, 10.0f).normalized);
+                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(0.0f, stats.args.spread, 10.0f).normalized);
+                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(0.0f, -stats.args.spread, 10.0f).normalized);
+            }
         }
 
         private void ResetFlags()
         {
             shootFlag = false;
             reloadFlag = false;
-        }
-
-        protected override void OnValidate()
-        {
-            if (!modelRoot) modelRoot = transform.Find("Viewport/Model").GetChild(0).GetChild(0);
         }
     }
 }

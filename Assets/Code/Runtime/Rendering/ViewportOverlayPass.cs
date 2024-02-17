@@ -104,6 +104,10 @@ namespace Framework.Runtime.Rendering
             cmd.Clear();
 
             context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings);
+            
+            filteringSettings = new FilteringSettings(RenderQueueRange.transparent, 1 << Layers.Viewport);
+            drawingSettings = CreateDrawingSettings(shaderTagIdList, ref renderingData, SortingCriteria.CommonTransparent);
+            context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings);
 
             cmd.SetRenderTarget(renderingData.cameraData.renderer.cameraColorTargetHandle);
             cmd.SetGlobalTexture("_ViewportOverlay", rtHandle);

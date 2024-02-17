@@ -44,11 +44,8 @@ namespace Framework.Runtime.Player
         {
             if (registeredWeapons.Count > 0)
             {
-                registeredWeapons[0].Equip();
-                for (var i = 1; i < registeredWeapons.Count; i++)
-                {
-                    registeredWeapons[i].Unequip();
-                }
+                foreach (var e in registeredWeapons) e.Unequip();
+                registeredWeapons[equippedWeapons[0]].Equip();
             }
         }
 

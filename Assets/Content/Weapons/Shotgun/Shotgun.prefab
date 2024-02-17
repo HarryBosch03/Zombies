@@ -152,6 +152,8 @@ MonoBehaviour:
   rightHandHold: {fileID: 0}
   ammo: 0
   fieldOfView: 50
+  modelRoot: {fileID: 7196881275373201892}
+  doForceAim: 0
   stats: {fileID: 11400000, guid: b64f3ba53d3aa1942b0b64a22a845ada, type: 2}
 --- !u!114 &5640844054840839083
 MonoBehaviour:

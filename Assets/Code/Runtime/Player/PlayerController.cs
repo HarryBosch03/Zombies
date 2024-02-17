@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using FishNet.Object;
 using Framework.Runtime.Core;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering.Universal;
 using UnityEngine.InputSystem;
 
 namespace Framework.Runtime.Player
@@ -11,6 +12,8 @@ namespace Framework.Runtime.Player
     {
         public InputActionAsset inputAsset;
         public float mouseSensitivity = 0.3f;
+
+        public RenderObjects[] viewportRenderObjects;
 
         private bool jumpFlag;
         private string username;
@@ -25,6 +28,16 @@ namespace Framework.Runtime.Player
         public Vector2 ViewInput { get; private set; }
         public Vector3 LookTarget => Biped.Center;
 
+        public float ViewportFieldOfView
+        {
+            get => viewportRenderObjects[0].settings.cameraSettings.cameraFieldOfView;
+            set
+            {
+                if (!IsOwner) return;
+                foreach (var e in viewportRenderObjects) e.settings.cameraSettings.cameraFieldOfView = value;
+            }
+        }
+        
         public static readonly List<PlayerController> All = new();
 
         private void Awake()

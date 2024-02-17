@@ -151,6 +151,8 @@ MonoBehaviour:
   rightHandHold: {fileID: 0}
   ammo: 0
   fieldOfView: 50
+  modelRoot: {fileID: 2740862111294371398}
+  doForceAim: 0
   stats: {fileID: 11400000, guid: 4a55d06ee14784e4587391d7f94ea498, type: 2}
 --- !u!114 &7661717834874383239
 MonoBehaviour:
@@ -220,8 +222,8 @@ MonoBehaviour:
   <ChildNetworkObjects>k__BackingField: []
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    LocalScale: {x: 0, y: 0, z: 0}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    LocalScale: {x: 1, y: 1, z: 1}
   _isNetworked: 1
   _isGlobal: 0
   _initializeOrder: 0

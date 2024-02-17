@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c812ed1a561b4070b4789b778353ffac, type: 3}
-  m_Name: Pistol-Statsheet
+  m_Name: Rifle-Statsheet
   m_EditorClassIdentifier: 
   projectile: {fileID: 1202828691346312600, guid: 1f492ab9d5d6cf644a3ea6c772a7ff81, type: 3}
   args:
@@ -23,11 +23,11 @@ MonoBehaviour:
     pierce: 0
     spread: 0
     count: 1
-  singleFire: 1
-  fireRate: 600
+  singleFire: 0
+  fireRate: 660
   aimTime: 0.15
-  muzzleOffset: {x: 0, y: 16.01, z: -5.02}
-  muzzleForwardDirection: {x: 0, y: 1, z: 0}
+  muzzleOffset: {x: 0, y: -0.18, z: 65.87}
+  muzzleForwardDirection: {x: 0, y: 0, z: 1}
   maxAmmo: 30
   ammoReloadedPerLoop: 0
   preReloadDuration: 0

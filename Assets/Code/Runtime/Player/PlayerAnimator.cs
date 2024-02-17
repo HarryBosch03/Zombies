@@ -39,8 +39,8 @@ namespace Framework.Runtime.Player
                 if (weapon.rightHandHold) rightTarget = weapon.rightHandHold;
             }
             
-            leftArm.Solve(leftTarget);
-            rightArm.Solve(rightTarget);
+            if (leftTarget) leftArm.Solve(leftTarget);
+            if (rightTarget) rightArm.Solve(rightTarget);
         }
 
         public class Arm
