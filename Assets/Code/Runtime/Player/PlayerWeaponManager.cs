@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using FishNet.Object;
+using Framework.Runtime.Player.Weapons;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,13 +12,13 @@ namespace Framework.Runtime.Player
     {
         public const int MaxEquippedWeapons = 2;
 
-        public int[] equippedWeapons;
+        public WeaponType[] weaponSlots;
 
         private PlayerController player;
-        private int currentWeaponIndex;
+        private int currentWeaponRegistryIndex;
         private List<PlayerWeapon> registeredWeapons = new();
 
-        public PlayerWeapon CurrentWeapon => currentWeaponIndex >= 0 && currentWeaponIndex < registeredWeapons.Count ? registeredWeapons[currentWeaponIndex] : null;
+        public PlayerWeapon CurrentWeapon => currentWeaponRegistryIndex >= 0 && currentWeaponRegistryIndex < registeredWeapons.Count ? registeredWeapons[currentWeaponRegistryIndex] : null;
 
         private void Awake()
         {
@@ -40,60 +41,45 @@ namespace Framework.Runtime.Player
             }
         }
 
-        private void Start()
+        public override void OnStartClient()
         {
-            if (registeredWeapons.Count > 0)
-            {
-                foreach (var e in registeredWeapons) e.Unequip();
-                registeredWeapons[equippedWeapons[0]].Equip();
-            }
+            EquipWeapon(weaponSlots[0]);
         }
 
-        private Action<InputAction.CallbackContext> SwitchWeaponInputCallback(int i) => _ =>
+        private Action<InputAction.CallbackContext> SwitchWeaponInputCallback(int slot) => _ =>
         {
-            if (IsOwner)
-            {
-                var index = equippedWeapons[i];
-                if (index != currentWeaponIndex) ServerRpcSwitchWeapon(index);
-            }
+            EquipWeapon(weaponSlots[slot]);
         };
 
-        [ServerRpc]
-        private void ServerRpcSwitchWeapon(int i)
+        public void EquipWeaponFromRegistry(int index)
         {
-            SwitchWeapon(i);
-            ObserverRpcSwitchWeapon(i);
+            if (!IsOwner) return;
+            RpcSwitchWeapon(index);
         }
 
-        [ObserversRpc]
-        private void ObserverRpcSwitchWeapon(int i) => SwitchWeapon(i);
-
-        private void SwitchWeapon(int i)
+        [ObserversRpc(ExcludeOwner = false, ExcludeServer = false)]
+        private void RpcSwitchWeapon(int index)
         {
             if (CurrentWeapon) CurrentWeapon.Unequip();
-            currentWeaponIndex = i;
+            currentWeaponRegistryIndex = index;
             if (CurrentWeapon) CurrentWeapon.Equip();
         }
 
-        public void EquipWeapon(string name, object args)
+        public void EquipWeapon(WeaponType type)
         {
-            var index = -1;
-
+            if (!IsOwner) return;
             if (!string.IsNullOrWhiteSpace(name))
             {
                 for (var i = 0; i < registeredWeapons.Count; i++)
                 {
                     var w = registeredWeapons[i];
-                    if (w.name != name) continue;
-
-                    index = i;
-                    break;
+                    if (w.identifier != type) continue;
+                    EquipWeaponFromRegistry(i);
+                    return;
                 }
             }
 
-            if (CurrentWeapon) CurrentWeapon.Unequip();
-            equippedWeapons[currentWeaponIndex] = index;
-            if (CurrentWeapon) CurrentWeapon.Equip(args);
+            EquipWeaponFromRegistry(-1);
         }
     }
 }

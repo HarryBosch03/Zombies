@@ -208,7 +208,7 @@ MonoBehaviour:
   jump: 0
   view: {fileID: 0}
   viewRotation: {x: 0, y: 0}
-  viewVelocity: {x: 0, y: 0}
+  viewFrameOffset: {x: 0, y: 0}
   body: {fileID: 0}
 --- !u!54 &7948254126462200293
 Rigidbody:
@@ -275,7 +275,7 @@ MonoBehaviour:
   _componentIndexCache: 2
   _addedNetworkObject: {fileID: 8254612993953636219}
   _networkObjectCache: {fileID: 8254612993953636219}
-  equippedWeapons: 0200000001000000
+  weaponSlots: 0200000000000000
 --- !u!114 &8946422024946501851
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -304,6 +304,9 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 8254612993953636219}
   _networkObjectCache: {fileID: 8254612993953636219}
   weight: 1
+  fovSmoothing: 0.4
+  fovTarget: 0
+  fovActual: 0
   settings: {fileID: 11400000, guid: b386a59de516e304aa72ff91e0604cc4, type: 2}
 --- !u!114 &8254612993953636219
 MonoBehaviour:

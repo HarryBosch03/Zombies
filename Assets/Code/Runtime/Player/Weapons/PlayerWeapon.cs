@@ -1,16 +1,15 @@
-using System;
-using System.Linq;
 using FishNet.Object;
-using UnityEngine;
-using Framework.Runtime.Rendering;
 using Framework.Runtime.Utility;
+using UnityEngine;
 using UnityEngine.Experimental.Rendering.Universal;
-using UnityEngine.Rendering.Universal;
 
-namespace Framework.Runtime.Player
+namespace Framework.Runtime.Player.Weapons
 {
     public abstract class PlayerWeapon : NetworkBehaviour
     {
+        public WeaponType identifier;
+        public WeaponStatSheet statSheet;
+        
         [Range(10.0f, 120.0f)]
         public float viewportFov = 50.0f;
 
@@ -43,6 +42,14 @@ namespace Framework.Runtime.Player
             viewport = transform.Find("Viewport");
             model = viewport.FindGameObject("Model");
 
+            if (!Player)
+            {
+                SpawnPickup();
+                
+                Destroy(gameObject);
+                return;
+            }
+            
             leftHandHold = transform.DeepFind("Hand.L");
             rightHandHold = transform.DeepFind("Hand.R");
 
@@ -50,9 +57,25 @@ namespace Framework.Runtime.Player
             {
                 t.gameObject.layer = ViewportLayer;
             }
+            
+            Unequip();
         }
 
-        private void OnEnable() { SetEquipState(false); }
+        private WeaponPickup SpawnPickup()
+        {
+            var instance = new GameObject($"Weapon Pickup [{name}]").AddComponent<WeaponPickup>();
+
+            instance.transform.position = transform.position;
+            instance.identifier = identifier;
+            instance.UseModel(model);
+            
+            return instance;
+        }
+
+        private void OnEnable()
+        {
+            SetEquipState(false);
+        }
 
         protected virtual void Update()
         {
@@ -67,7 +90,7 @@ namespace Framework.Runtime.Player
 
         protected virtual void UpdateEquipped() { }
 
-        public void Equip(object args = null)
+        public void Equip()
         {
             SetEquipState(true);
             OnEquip();

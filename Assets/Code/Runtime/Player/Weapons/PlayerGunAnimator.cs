@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
-namespace Framework.Runtime.Player
+namespace Framework.Runtime.Player.Weapons
 {
     [RequireComponent(typeof(PlayerGun))]
     public class PlayerGunAnimator : MonoBehaviour
@@ -54,14 +54,25 @@ namespace Framework.Runtime.Player
 
         private void OnEnable()
         {
-            PlayerGun.ShootEvent += OnGunShoot;
+            gun.ShootEvent += OnGunShoot;
+            gun.EquipEvent += OnGunEquip;
             translationPid.position = dropPose.position;
             rotationPid.position = dropPose.eulerAngles;
         }
 
-        private void OnDisable() { PlayerGun.ShootEvent -= OnGunShoot; }
+        private void OnDisable()
+        {
+            gun.ShootEvent -= OnGunShoot; 
+            gun.EquipEvent -= OnGunEquip;
+        }
+        
+        private void OnGunEquip()
+        {
+            translationPid.position = dropPose.position;
+            rotationPid.position = dropPose.eulerAngles;
+        }
 
-        private void OnGunShoot(PlayerGun gun)
+        private void OnGunShoot()
         {
             if (gun != this.gun) return;
 

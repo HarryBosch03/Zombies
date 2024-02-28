@@ -146,15 +146,18 @@ MonoBehaviour:
   _componentIndexCache: 0
   _addedNetworkObject: {fileID: 7866016466618334049}
   _networkObjectCache: {fileID: 7866016466618334049}
+  identifier: 1
+  statSheet: {fileID: 11400000, guid: b64f3ba53d3aa1942b0b64a22a845ada, type: 2}
   viewportFov: 50
   isOwner: 0
   leftHandHold: {fileID: 0}
   rightHandHold: {fileID: 0}
   ammo: 0
+  ShootUnityEvent:
+    m_PersistentCalls:
+      m_Calls: []
   fieldOfView: 50
   modelRoot: {fileID: 7196881275373201892}
-  doForceAim: 0
-  stats: {fileID: 11400000, guid: b64f3ba53d3aa1942b0b64a22a845ada, type: 2}
 --- !u!114 &5640844054840839083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -230,7 +233,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _defaultDespawnType: 0
   NetworkObserver: {fileID: 0}
-  <PrefabId>k__BackingField: 0
+  <PrefabId>k__BackingField: 3
   <SpawnableCollectionId>k__BackingField: 0
   _scenePathHash: 0
   <SceneId>k__BackingField: 0

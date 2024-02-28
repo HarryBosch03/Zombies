@@ -1,22 +1,21 @@
 using System;
 using System.Collections;
 using FishNet.Object;
-using UnityEngine;
+using Framework.Runtime.Data;
 using Framework.Runtime.Utility;
-using Random = UnityEngine.Random;
+using UnityEngine;
+using UnityEngine.Events;
 
-namespace Framework.Runtime.Player
+namespace Framework.Runtime.Player.Weapons
 {
     public class PlayerGun : PlayerWeapon
     {
         public int ammo;
+        public UnityEvent ShootUnityEvent;
 
         [HideInInspector]
         public float fieldOfView = 50.0f;
         public Transform modelRoot;
-        public bool doForceAim;
-
-        public GunStatSheet stats;
 
         private PlayerController player;
         private float lastFireTime;
@@ -24,19 +23,24 @@ namespace Framework.Runtime.Player
         private ParticleSystem flash;
         private ParticleSystem smoke;
         private float equipTime;
+        
+        private bool isAiming;
 
         private Vector2 recoilPosition;
         private Vector2 recoilVelocity;
         
-        public static event System.Action<PlayerGun> ShootEvent;
+        public event Action EquipEvent;
+        public event Action ShootEvent;
 
-        public override string AmmoLabel => ammo >= 0 ? $"{ammo}/{stats.maxAmmo}" : "--/--";
-        public Vector3? MuzzlePosition => modelRoot && stats ? modelRoot.TransformPoint(stats.muzzleOffset * 0.01f) : null;
-        public Quaternion? MuzzleOrientation => modelRoot && stats ? modelRoot.rotation * Quaternion.LookRotation(stats.muzzleForwardDirection).normalized : null;
+        public GunStatSheet StatSheet => (GunStatSheet)statSheet;
+        public override string AmmoLabel => ammo >= 0 ? $"{ammo}/{StatSheet.maxAmmo}" : "--/--";
+        public Vector3? MuzzlePosition => modelRoot && StatSheet ? modelRoot.TransformPoint(StatSheet.muzzleOffset * 0.01f) : null;
+        public Quaternion? MuzzleOrientation => modelRoot && StatSheet ? modelRoot.rotation * Quaternion.LookRotation(StatSheet.muzzleForwardDirection).normalized : null;
         public Vector3? MuzzleDirection => MuzzleOrientation * Vector3.forward;
         public float AimPercent { get; private set; }
         public bool IsReloading { get; private set; }
-
+        public static bool ToggleAim => Settings.Index<bool>("ToggleAim");
+        
         public override float ViewportFieldOfView => fieldOfView;
 
         protected override void Awake()
@@ -48,16 +52,21 @@ namespace Framework.Runtime.Player
             flash = viewport.Find<ParticleSystem>("Flash");
             smoke = viewport.Find<ParticleSystem>("Smoke");
 
-            ammo = stats.maxAmmo;
+            ammo = StatSheet.maxAmmo;
         }
 
-        public override void OnEquip() { equipTime = Time.time; }
+        public override void OnEquip()
+        {
+            equipTime = Time.time; 
+            EquipEvent?.Invoke();
+        }
 
         public override void OnUnequip()
         {
             StopCoroutine(nameof(ReloadRoutine));
             IsReloading = false;
             AimPercent = 0.0f;
+            isAiming = false;
         }
 
         protected override void Update()
@@ -69,29 +78,39 @@ namespace Framework.Runtime.Player
 
         protected override void UpdateEquipped()
         {
-            if (Time.time - equipTime > stats.equipTime)
+            if (Time.time - equipTime > StatSheet.equipTime)
             {
-                var aiming = Player.AimAction.IsPressed();
-                if (doForceAim) aiming = true;
-                
+                if (ToggleAim)
+                {
+                    if (Player.AimAction.WasPressedThisFrame()) isAiming = !isAiming;
+                }
+                else
+                {
+                    isAiming = Player.AimAction.IsPressed();
+                }
+
                 if (Player.ReloadAction.WasPressedThisFrame())
                 {
                     StartReload();
                 }
                 else if (IsReloading)
                 {
-                    aiming = false;
+                    isAiming = false;
                 }
                 else
                 {
-                    if (stats.singleFire ? Player.ShootAction.WasPressedThisFrame() : Player.ShootAction.IsPressed())
+                    if (StatSheet.singleFire ? Player.ShootAction.WasPressedThisFrame() : Player.ShootAction.IsPressed())
                     {
                         Shoot();
                     }
                 }
 
-                AimPercent += (aiming ? 1 : -1) / stats.aimTime * Time.deltaTime;
+                AimPercent += (isAiming ? 1 : -1) / StatSheet.aimTime * Time.deltaTime;
                 AimPercent = Mathf.Clamp01(AimPercent);
+
+                Player.Camera.FovOverride = GunStatSheet.AimFov;
+                Player.Camera.FovOverrideBlend = AimPercent;
+                Player.Camera.FunctionalZoom = Mathf.Lerp(1.0f, StatSheet.aimZoom, AimPercent);
             }
         }
 
@@ -102,7 +121,7 @@ namespace Framework.Runtime.Player
 
         private void UpdateRecoilKinematics()
         {
-            var force = -recoilPosition * stats.recoilSpring - recoilVelocity * stats.recoilDamping;
+            var force = -recoilPosition * StatSheet.recoilSpring - recoilVelocity * StatSheet.recoilDamping;
             
             recoilPosition += recoilVelocity * Time.deltaTime;
             recoilVelocity += force * Time.deltaTime;
@@ -111,10 +130,10 @@ namespace Framework.Runtime.Player
         private void Shoot()
         {
             if (!IsOwner) return;
-            if (Time.time < lastFireTime + 60.0f / stats.fireRate) return;
+            if (Time.time < lastFireTime + 60.0f / StatSheet.fireRate) return;
             if (ammo == 0) return;
 
-            stats.projectile.SpawnFromPrefab(player.gameObject, stats.args, MuzzlePosition.Value, player.Biped.body.velocity, MuzzleDirection.Value);
+            StatSheet.projectile.SpawnFromPrefab(player.gameObject, StatSheet.args, MuzzlePosition.Value, player.Biped.body.velocity, MuzzleDirection.Value);
             ServerRpcShoot(MuzzlePosition.Value, player.Biped.body.velocity, MuzzleDirection.Value);
 
             if (flash) flash.Play();
@@ -122,19 +141,20 @@ namespace Framework.Runtime.Player
 
             recoilVelocity += new Vector2
             {
-                x = RandomUtils.MedianVariance(stats.viewRecoilMedian.x, stats.viewRecoilVariance.x),
-                y = RandomUtils.MedianVariance(stats.viewRecoilMedian.y, stats.viewRecoilVariance.y),
+                x = RandomUtils.MedianVariance(StatSheet.viewRecoilMedian.x, StatSheet.viewRecoilVariance.x),
+                y = RandomUtils.MedianVariance(StatSheet.viewRecoilMedian.y, StatSheet.viewRecoilVariance.y),
             };
             
             lastFireTime = Time.time;
             ammo--;
 
-            ShootEvent?.Invoke(this);
+            ShootEvent?.Invoke();
+            ShootUnityEvent?.Invoke();
         }
 
         private void StartReload()
         {
-            if (ammo >= stats.maxAmmo) return;
+            if (ammo >= StatSheet.maxAmmo) return;
             if (IsReloading) return;
 
             StartCoroutine(nameof(ReloadRoutine));
@@ -144,22 +164,22 @@ namespace Framework.Runtime.Player
         {
             IsReloading = true;
 
-            if (stats.ammoReloadedPerLoop < 1)
+            if (StatSheet.ammoReloadedPerLoop < 1)
             {
                 ammo = 0;
-                yield return new WaitForSeconds(stats.reloadLoopDuration);
-                ammo = stats.maxAmmo;
+                yield return new WaitForSeconds(StatSheet.reloadLoopDuration);
+                ammo = StatSheet.maxAmmo;
             }
             else
             {
-                yield return new WaitForSeconds(stats.preReloadDuration);
-                while (ammo < stats.maxAmmo)
+                yield return new WaitForSeconds(StatSheet.preReloadDuration);
+                while (ammo < StatSheet.maxAmmo)
                 {
-                    yield return new WaitForSeconds(stats.reloadLoopDuration);
-                    ammo = Mathf.Min(stats.maxAmmo, ammo + stats.ammoReloadedPerLoop);
+                    yield return new WaitForSeconds(StatSheet.reloadLoopDuration);
+                    ammo = Mathf.Min(StatSheet.maxAmmo, ammo + StatSheet.ammoReloadedPerLoop);
                 }
 
-                yield return new WaitForSeconds(stats.postReloadDuration);
+                yield return new WaitForSeconds(StatSheet.postReloadDuration);
             }
 
             IsReloading = false;
@@ -170,14 +190,14 @@ namespace Framework.Runtime.Player
         {
             ClientRpcShoot(position, velocity, direction);
             if (IsOwner) return;
-            stats.projectile.SpawnFromPrefab(player.gameObject, stats.args, position, velocity, direction);
+            StatSheet.projectile.SpawnFromPrefab(player.gameObject, StatSheet.args, position, velocity, direction);
         }
 
         [ObserversRpc]
         private void ClientRpcShoot(Vector3 position, Vector3 velocity, Vector3 direction)
         {
             if (IsOwner) return;
-            stats.projectile.SpawnFromPrefab(player.gameObject, stats.args, position, velocity, direction);
+            StatSheet.projectile.SpawnFromPrefab(player.gameObject, StatSheet.args, position, velocity, direction);
         }
 
         private void OnDrawGizmos()
@@ -196,12 +216,12 @@ namespace Framework.Runtime.Player
         {
             Gizmos.color = Color.yellow;
 
-            if (MuzzlePosition != null && MuzzleOrientation != null && stats)
+            if (MuzzlePosition != null && MuzzleOrientation != null && StatSheet)
             {
-                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(stats.args.spread, 0.0f, 10.0f).normalized);
-                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(-stats.args.spread, 0.0f, 10.0f).normalized);
-                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(0.0f, stats.args.spread, 10.0f).normalized);
-                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(0.0f, -stats.args.spread, 10.0f).normalized);
+                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(StatSheet.args.spread, 0.0f, 10.0f).normalized);
+                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(-StatSheet.args.spread, 0.0f, 10.0f).normalized);
+                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(0.0f, StatSheet.args.spread, 10.0f).normalized);
+                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(0.0f, -StatSheet.args.spread, 10.0f).normalized);
             }
         }
         

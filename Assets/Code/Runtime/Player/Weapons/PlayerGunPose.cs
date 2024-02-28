@@ -1,7 +1,6 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 
-namespace Framework.Runtime.Player
+namespace Framework.Runtime.Player.Weapons
 {
     [CreateAssetMenu(menuName = "ScriptableObjects/Player/PlayerGunPose")]
     public class PlayerGunPose : ScriptableObject

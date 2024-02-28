@@ -24,7 +24,10 @@ namespace Framework.Runtime.Player
         public InputAction AimAction { get; private set; }
         public InputAction ReloadAction { get; private set; }
         public InputAction InteractAction { get; set; }
+        
         public PlayerMovement Biped { get; private set; }
+        public PlayerCameraAnimator Camera { get; private set; }
+        
         public Vector2 ViewInput { get; private set; }
         public Vector3 LookTarget => Biped.Center;
 
@@ -43,6 +46,7 @@ namespace Framework.Runtime.Player
         private void Awake()
         {
             Biped = GetComponent<PlayerMovement>();
+            Camera = GetComponent<PlayerCameraAnimator>();
 
             MoveAction = inputAsset.FindAction("Move");
             JumpAction = inputAsset.FindAction("Jump");

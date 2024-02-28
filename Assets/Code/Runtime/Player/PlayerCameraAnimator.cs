@@ -12,6 +12,11 @@ namespace Framework.Runtime.Player
         [Range(0.0f, 1.0f)]
         public float weight = 1.0f;
 
+        [Range(0.0f, 1.0f)]
+        public float fovSmoothing;
+        public float fovTarget;
+        public float fovActual;
+
         public PlayerCameraAnimatorSettings settings;
 
         private Vector3 smoothedPosition;
@@ -22,6 +27,8 @@ namespace Framework.Runtime.Player
         private float distance;
 
         public PlayerMovement Biped => controller.Biped;
+        public float FovOverride { get; set; } = 50.0f;
+        public float FovOverrideBlend { get; set; }
         public float FunctionalZoom { get; set; } = 1.0f;
         public float EffectZoom { get; set; } = 1.0f;
         public Quaternion RotationOffset { get; set; }
@@ -36,13 +43,12 @@ namespace Framework.Runtime.Player
         {
             UpdateState();
             var pose = CompilePose();
-            var fov = CalculateFov();
-            UpdateCamera(pose, fov);
+            UpdateCamera(pose, fovActual);
         }
 
         private float CalculateFov()
         {
-            var angle = settings.fieldOfView * 0.5f * Mathf.Deg2Rad;
+            var angle = Mathf.Lerp(settings.fieldOfView, FovOverride, FovOverrideBlend) * 0.5f * Mathf.Deg2Rad;
             var tangent = Mathf.Tan(angle);
 
             var zoom = FunctionalZoom * Mathf.Lerp(1.0f, EffectZoom, settings.fovEffects);
@@ -55,6 +61,9 @@ namespace Framework.Runtime.Player
         {
             FunctionalZoom = 1.0f;
             EffectZoom = 1.0f;
+
+            fovTarget = CalculateFov();
+            fovActual += (fovTarget - fovActual) * (1.0f - fovSmoothing);
 
             CalculateZoomEffects();
         }

@@ -145,14 +145,18 @@ MonoBehaviour:
   _componentIndexCache: 0
   _addedNetworkObject: {fileID: 7893673043224287217}
   _networkObjectCache: {fileID: 7893673043224287217}
+  identifier: Pistol
+  statSheet: {fileID: 11400000, guid: 4a55d06ee14784e4587391d7f94ea498, type: 2}
   viewportFov: 50
   isOwner: 0
   leftHandHold: {fileID: 0}
   rightHandHold: {fileID: 0}
   ammo: 0
+  ShootUnityEvent:
+    m_PersistentCalls:
+      m_Calls: []
   fieldOfView: 50
   modelRoot: {fileID: 2740862111294371398}
-  stats: {fileID: 11400000, guid: 4a55d06ee14784e4587391d7f94ea498, type: 2}
 --- !u!114 &7661717834874383239
 MonoBehaviour:
   m_ObjectHideFlags: 0
