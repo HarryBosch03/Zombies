@@ -1,11 +1,10 @@
-using FishNet.Object;
 using Framework.Runtime.Utility;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.Universal;
 
 namespace Framework.Runtime.Player.Weapons
 {
-    public abstract class PlayerWeapon : NetworkBehaviour
+    public abstract class PlayerWeapon : MonoBehaviour
     {
         public WeaponType identifier;
         public WeaponStatSheet statSheet;
@@ -15,13 +14,14 @@ namespace Framework.Runtime.Player.Weapons
 
         public const int ViewportLayer = 3;
 
-        public bool isOwner;
-
         [HideInInspector] public Transform leftHandHold;
         [HideInInspector] public Transform rightHandHold;
 
-        protected GameObject model;
         protected Transform viewport;
+        protected GameObject viewportModel;
+        
+        protected Transform world;
+        protected GameObject worldModel;
 
         private static RenderObjects[] viewportRenderObjects;
 
@@ -40,15 +40,9 @@ namespace Framework.Runtime.Player.Weapons
             Player = GetComponentInParent<PlayerController>();
 
             viewport = transform.Find("Viewport");
-            model = viewport.FindGameObject("Model");
+            viewportModel = viewport.FindGameObject("Model");
 
-            if (!Player)
-            {
-                SpawnPickup();
-                
-                Destroy(gameObject);
-                return;
-            }
+            InstanceItemModel();
             
             leftHandHold = transform.DeepFind("Hand.L");
             rightHandHold = transform.DeepFind("Hand.R");
@@ -61,13 +55,43 @@ namespace Framework.Runtime.Player.Weapons
             Unequip();
         }
 
+        private void InstanceItemModel()
+        {
+            world = new GameObject("World").transform;
+            world.SetParent(transform);
+            world.ResetPose();
+
+            worldModel = Instantiate(viewportModel);
+            worldModel.transform.ResetPose();
+            
+            var bounds = new Bounds();
+            foreach (var e in worldModel.GetComponentsInChildren<Renderer>(true))
+            {
+                bounds.Encapsulate(e.bounds);
+            }
+            
+            worldModel.transform.SetParent(world);
+            worldModel.transform.localPosition = -bounds.center;
+
+            if (bounds.size.magnitude > float.Epsilon)
+            {
+                var collider = gameObject.AddComponent<BoxCollider>();
+                collider.size = bounds.size;
+                collider.isTrigger = true;
+            }
+            
+            foreach (var e in worldModel.GetComponentsInChildren<Animator>()) Destroy(e);
+            
+            world.gameObject.SetActive(false);
+        }
+
         private WeaponPickup SpawnPickup()
         {
             var instance = new GameObject($"Weapon Pickup [{name}]").AddComponent<WeaponPickup>();
 
             instance.transform.position = transform.position;
             instance.identifier = identifier;
-            instance.UseModel(model);
+            instance.UseModel(viewportModel);
             
             return instance;
         }
@@ -79,8 +103,6 @@ namespace Framework.Runtime.Player.Weapons
 
         protected virtual void Update()
         {
-            isOwner = IsOwner;
-
             if (Equipped)
             {
                 UpdateEquipped();
@@ -107,9 +129,9 @@ namespace Framework.Runtime.Player.Weapons
 
         private void SetEquipState(bool state)
         {
-            if (model)
+            if (viewportModel)
             {
-                model.gameObject.SetActive(state);
+                viewportModel.gameObject.SetActive(state);
             }
 
             Equipped = state;

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using FishNet.Object;
 using Framework.Runtime.Core;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.Universal;
@@ -8,7 +7,7 @@ using UnityEngine.InputSystem;
 namespace Framework.Runtime.Player
 {
     [RequireComponent(typeof(PlayerMovement))]
-    public class PlayerController : NetworkBehaviour, IPersonality
+    public class PlayerController : MonoBehaviour, IPersonality
     {
         public InputActionAsset inputAsset;
         public float mouseSensitivity = 0.3f;
@@ -24,10 +23,10 @@ namespace Framework.Runtime.Player
         public InputAction AimAction { get; private set; }
         public InputAction ReloadAction { get; private set; }
         public InputAction InteractAction { get; set; }
-        
+
         public PlayerMovement Biped { get; private set; }
         public PlayerCameraAnimator Camera { get; private set; }
-        
+
         public Vector2 ViewInput { get; private set; }
         public Vector3 LookTarget => Biped.Center;
 
@@ -36,11 +35,10 @@ namespace Framework.Runtime.Player
             get => viewportRenderObjects[0].settings.cameraSettings.cameraFieldOfView;
             set
             {
-                if (!IsOwner) return;
                 foreach (var e in viewportRenderObjects) e.settings.cameraSettings.cameraFieldOfView = value;
             }
         }
-        
+
         public static readonly List<PlayerController> All = new();
 
         private void Awake()
@@ -59,7 +57,7 @@ namespace Framework.Runtime.Player
         private void OnEnable()
         {
             inputAsset.Enable();
-            
+
             Cursor.lockState = CursorLockMode.Locked;
             All.Add(this);
         }
@@ -72,15 +70,6 @@ namespace Framework.Runtime.Player
             All.Remove(this);
         }
 
-        public override void OnStartNetwork()
-        {
-            if (Owner.IsLocalClient)
-            {
-                username = Reference.FirstNames[Random.Range(0, Reference.FirstNames.Length)];
-                RpcSetUsername(username);
-            }
-        }
-
         private void RpcSetUsername(string username)
         {
             this.username = username;
@@ -89,20 +78,15 @@ namespace Framework.Runtime.Player
 
         private void FixedUpdate()
         {
-            if (IsOwner)
-            {
-                var moveInput = MoveAction.ReadValue<Vector2>();
-                Biped.moveInput = transform.TransformDirection(moveInput.x, 0.0f, moveInput.y);
+            var moveInput = MoveAction.ReadValue<Vector2>();
+            Biped.moveInput = transform.TransformDirection(moveInput.x, 0.0f, moveInput.y);
 
-                Biped.jump = jumpFlag;
-                jumpFlag = false;
-            }
+            Biped.jump = jumpFlag;
+            jumpFlag = false;
         }
 
         private void Update()
         {
-            if (!IsOwner) return;
-
             var delta = Vector2.zero;
             delta += Mouse.current.delta.ReadValue() * mouseSensitivity * Mathf.Min(1.0f, Time.timeScale);
             Biped.viewRotation += delta;

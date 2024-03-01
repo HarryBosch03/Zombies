@@ -1,6 +1,4 @@
-﻿using System;
-using FishNet.Object;
-using Framework.Runtime.Interactions;
+﻿using Framework.Runtime.Interactions;
 using Framework.Runtime.Utility;
 using TMPro;
 using UnityEngine;
@@ -8,7 +6,7 @@ using UnityEngine.UI;
 
 namespace Framework.Runtime.Player
 {
-    public class PlayerInteractionManager : NetworkBehaviour
+    public class PlayerInteractionManager : MonoBehaviour
     {
         public float interactionDistance = 3.0f;
 
@@ -40,8 +38,6 @@ namespace Framework.Runtime.Player
 
         private void FixedUpdate()
         {
-            if (!IsOwner) return;
-
             lastInput = input;
             input = player.InteractAction.IsPressed();
 

@@ -1,9 +1,8 @@
-﻿using FishNet.Object;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Framework.Runtime.Npc.Movement
 {
-    public class NpcMovement : NetworkBehaviour
+    public class NpcMovement : MonoBehaviour
     {
         public Vector3? targetPosition;
         public Vector3? targetDirection;

@@ -106,7 +106,6 @@ GameObject:
   - component: {fileID: 925518556983414567}
   - component: {fileID: 946812931161656939}
   - component: {fileID: 7661717834874383239}
-  - component: {fileID: 7893673043224287217}
   m_Layer: 0
   m_Name: Pistol
   m_TagString: Untagged
@@ -142,13 +141,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf72d0d2c13aaea42ae05f2c039d501b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 0
-  _addedNetworkObject: {fileID: 7893673043224287217}
-  _networkObjectCache: {fileID: 7893673043224287217}
-  identifier: Pistol
+  identifier: 0
   statSheet: {fileID: 11400000, guid: 4a55d06ee14784e4587391d7f94ea498, type: 2}
   viewportFov: 50
-  isOwner: 0
   leftHandHold: {fileID: 0}
   rightHandHold: {fileID: 0}
   ammo: 0
@@ -204,39 +199,6 @@ MonoBehaviour:
   reset: 0
   postShootAnimationRef: 
   postShootAnimationDelay: 0
---- !u!114 &7893673043224287217
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8587161786134206647}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <IsNested>k__BackingField: 0
-  <ComponentIndex>k__BackingField: 0
-  <PredictedSpawn>k__BackingField: {fileID: 0}
-  _networkBehaviours:
-  - {fileID: 946812931161656939}
-  <ParentNetworkObject>k__BackingField: {fileID: 0}
-  <ChildNetworkObjects>k__BackingField: []
-  SerializedTransformProperties:
-    Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    LocalScale: {x: 0, y: 0, z: 0}
-  _isNetworked: 1
-  _isGlobal: 0
-  _initializeOrder: 0
-  _defaultDespawnType: 0
-  NetworkObserver: {fileID: 0}
-  <PrefabId>k__BackingField: 0
-  <SpawnableCollectionId>k__BackingField: 0
-  _scenePathHash: 0
-  <SceneId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 1464249253001299939
 --- !u!1001 &3239636451416039192
 PrefabInstance:
   m_ObjectHideFlags: 0

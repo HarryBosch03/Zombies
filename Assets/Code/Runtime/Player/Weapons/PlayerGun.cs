@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using FishNet.Object;
 using Framework.Runtime.Data;
 using Framework.Runtime.Utility;
 using UnityEngine;
@@ -129,13 +128,11 @@ namespace Framework.Runtime.Player.Weapons
 
         private void Shoot()
         {
-            if (!IsOwner) return;
             if (Time.time < lastFireTime + 60.0f / StatSheet.fireRate) return;
             if (ammo == 0) return;
 
             StatSheet.projectile.SpawnFromPrefab(player.gameObject, StatSheet.args, MuzzlePosition.Value, player.Biped.body.velocity, MuzzleDirection.Value);
-            ServerRpcShoot(MuzzlePosition.Value, player.Biped.body.velocity, MuzzleDirection.Value);
-
+            
             if (flash) flash.Play();
             if (smoke && !smoke.isPlaying) smoke.Play();
 
@@ -183,21 +180,6 @@ namespace Framework.Runtime.Player.Weapons
             }
 
             IsReloading = false;
-        }
-
-        [ServerRpc]
-        private void ServerRpcShoot(Vector3 position, Vector3 velocity, Vector3 direction)
-        {
-            ClientRpcShoot(position, velocity, direction);
-            if (IsOwner) return;
-            StatSheet.projectile.SpawnFromPrefab(player.gameObject, StatSheet.args, position, velocity, direction);
-        }
-
-        [ObserversRpc]
-        private void ClientRpcShoot(Vector3 position, Vector3 velocity, Vector3 direction)
-        {
-            if (IsOwner) return;
-            StatSheet.projectile.SpawnFromPrefab(player.gameObject, StatSheet.args, position, velocity, direction);
         }
 
         private void OnDrawGizmos()

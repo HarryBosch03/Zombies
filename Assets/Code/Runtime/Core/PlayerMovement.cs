@@ -1,13 +1,11 @@
-﻿using FishNet.Object;
-using UnityEngine;
-using UnityEngine.Serialization;
+﻿using UnityEngine;
 using Framework.Runtime.Utility;
 
 namespace Framework.Runtime.Core
 {
     [SelectionBase]
     [DisallowMultipleComponent]
-    public class PlayerMovement : NetworkBehaviour
+    public class PlayerMovement : MonoBehaviour
     {
         public bool isOwner;
 
@@ -26,7 +24,7 @@ namespace Framework.Runtime.Core
         [Range(0.0f, 1.0f)]
         public float heightSmoothing = 0.4f;
 
-        [Space] 
+        [Space]
         public float viewKinematicsDrag = 100.0f;
 
         #endregion
@@ -75,51 +73,12 @@ namespace Framework.Runtime.Core
 
         private void FixedUpdate()
         {
-            isOwner = IsOwner;
-
-            if (IsOwner)
-            {
-                var networkState = new NetworkState();
-
-                networkState.position = body.position;
-                networkState.velocity = body.velocity;
-                networkState.rotation = viewRotation;
-                
-                networkState.moveInput = moveInput;
-                networkState.jump = jump;
-
-                RpcSendNetworkStateToServer(networkState);
-            }
-
             LookForGround();
             Move();
             Jump();
             ApplyGravity();
 
             lastPosition = transform.position;
-        }
-
-        [ServerRpc]
-        private void RpcSendNetworkStateToServer(NetworkState networkState)
-        {
-            ApplyNetworkState(networkState);
-            RpcSendNetworkStateToObservers(networkState);
-        }
-        
-        [ObserversRpc]
-        private void RpcSendNetworkStateToObservers(NetworkState networkState) => ApplyNetworkState(networkState);
-
-        private void ApplyNetworkState(NetworkState networkState)
-        {
-            if (IsOwner) return;
-
-            body.position = reconcileV3(body.position, networkState.position, 1.0f);
-            body.velocity = reconcileV3(body.velocity, networkState.velocity, 1.0f);
-            viewRotation = networkState.rotation;
-            moveInput = networkState.moveInput;
-            jump = networkState.jump;
-
-            Vector3 reconcileV3(Vector3 localValue, Vector3 netValue, float threshold) => (localValue - netValue).magnitude > threshold ? netValue : localValue;
         }
 
         private void ApplyGravity()
@@ -174,22 +133,11 @@ namespace Framework.Runtime.Core
 
             var final = viewRotation + viewFrameOffset;
             viewFrameOffset = Vector2.zero;
-            
+
             body.rotation = Quaternion.Euler(0.0f, final.x, 0.0f);
 
             view.position = Vector3.Lerp(lastPosition, transform.position, (Time.time - Time.fixedTime) / Time.fixedDeltaTime) + Vector3.up * 1.8f;
             view.rotation = Quaternion.Euler(-final.y, final.x, 0.0f);
-        }
-        
-        [System.Serializable]
-        public struct NetworkState
-        {
-            public Vector3 position;
-            public Vector3 velocity;
-            public Vector2 rotation;
-
-            public Vector3 moveInput;
-            [FormerlySerializedAs("jumpFlag")] public bool jump;
         }
     }
 }

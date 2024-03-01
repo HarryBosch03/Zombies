@@ -62,5 +62,12 @@ namespace Framework.Runtime.Utility
         }
 
         public static Quaternion Euler(this Vector3 v) => Quaternion.Euler(v);
+
+        public static void ResetPose(this Transform transform)
+        {
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+            transform.localScale = Vector3.one;
+        }
     }
 }

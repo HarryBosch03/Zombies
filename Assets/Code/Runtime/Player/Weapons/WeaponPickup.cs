@@ -1,5 +1,4 @@
-﻿using System;
-using Framework.Runtime.Interactions;
+﻿using Framework.Runtime.Interactions;
 using UnityEngine;
 
 namespace Framework.Runtime.Player.Weapons

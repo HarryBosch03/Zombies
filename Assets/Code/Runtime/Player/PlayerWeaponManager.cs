@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using FishNet.Object;
 using Framework.Runtime.Player.Weapons;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -8,7 +7,7 @@ using UnityEngine.InputSystem;
 namespace Framework.Runtime.Player
 {
     [RequireComponent(typeof(PlayerController))]
-    public class PlayerWeaponManager : NetworkBehaviour
+    public class PlayerWeaponManager : MonoBehaviour
     {
         public const int MaxEquippedWeapons = 2;
 
@@ -41,7 +40,7 @@ namespace Framework.Runtime.Player
             }
         }
 
-        public override void OnStartClient()
+        private void Start()
         {
             EquipWeapon(weaponSlots[0]);
         }
@@ -53,13 +52,6 @@ namespace Framework.Runtime.Player
 
         public void EquipWeaponFromRegistry(int index)
         {
-            if (!IsOwner) return;
-            RpcSwitchWeapon(index);
-        }
-
-        [ObserversRpc(ExcludeOwner = false, ExcludeServer = false)]
-        private void RpcSwitchWeapon(int index)
-        {
             if (CurrentWeapon) CurrentWeapon.Unequip();
             currentWeaponRegistryIndex = index;
             if (CurrentWeapon) CurrentWeapon.Equip();
@@ -67,7 +59,6 @@ namespace Framework.Runtime.Player
 
         public void EquipWeapon(WeaponType type)
         {
-            if (!IsOwner) return;
             if (!string.IsNullOrWhiteSpace(name))
             {
                 for (var i = 0; i < registeredWeapons.Count; i++)

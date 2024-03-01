@@ -1,8 +1,8 @@
-using FishNet.Object;
+using UnityEngine;
 
 namespace Framework.Runtime.GameModes
 {
-    public class GameMode : NetworkBehaviour
+    public class GameMode : MonoBehaviour
     {
         
     }

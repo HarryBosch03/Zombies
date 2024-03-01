@@ -1,7 +1,4 @@
 using System.Linq;
-using FishNet;
-using FishNet.Object;
-using FishNet.Object.Synchronizing;
 using Framework.Runtime.Vitality;
 using UnityEngine;
 using Framework.Runtime.Utility;
@@ -13,7 +10,6 @@ namespace Framework.Runtime.Projectiles
         private GameObject hitFX;
         private ParticleSystem trail;
 
-        [SyncVar]
         private ProjectileSpawnArgs args;
         
         private Vector3 velocity;

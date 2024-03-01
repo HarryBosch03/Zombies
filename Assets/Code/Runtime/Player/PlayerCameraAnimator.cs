@@ -1,5 +1,4 @@
 using System;
-using FishNet.Object;
 using Framework.Runtime.Core;
 using UnityEngine;
 using Framework.Runtime.Utility;
@@ -7,7 +6,7 @@ using Framework.Runtime.Utility;
 namespace Framework.Runtime.Player
 {
     [RequireComponent(typeof(PlayerController))]
-    public class PlayerCameraAnimator : NetworkBehaviour
+    public class PlayerCameraAnimator : MonoBehaviour
     {
         [Range(0.0f, 1.0f)]
         public float weight = 1.0f;
@@ -93,8 +92,6 @@ namespace Framework.Runtime.Player
             
             smoothedPosition = Vector3.Lerp(position, smoothedPosition, Time.deltaTime * settings.poseSmoothing);
             smoothedRotation = Quaternion.Slerp(rotation, smoothedRotation, Time.deltaTime * settings.poseSmoothing);
-
-            if (!IsOwner) return;
 
             var cam = mainCamera.transform;
             cam.position = smoothedPosition;

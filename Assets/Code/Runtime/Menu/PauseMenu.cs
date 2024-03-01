@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using FishNet;
 using Framework.Runtime.Player;
 using TMPro;
 using UnityEngine;
@@ -29,18 +28,6 @@ namespace Framework.Runtime.Menu
             pauseAction.performed += OnPauseActionPerformed;
             pauseAction.Enable();
             
-            Open(false);
-        }
-
-        private void StartServer()
-        {
-            InstanceFinder.ServerManager.StartConnection();
-            StartClient();
-        }
-
-        private void StartClient()
-        {
-            InstanceFinder.ClientManager.StartConnection();
             Open(false);
         }
 
@@ -82,8 +69,6 @@ namespace Framework.Runtime.Menu
 
             AddButton("Resume", () => Open(false));
             AddButton("Reload Scene", ReloadScene);
-            AddButton("Start Server", StartServer);
-            AddButton("Start Client", StartClient);
             AddButton("Quit", Quit);
         }
         

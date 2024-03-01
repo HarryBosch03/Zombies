@@ -41,8 +41,8 @@ namespace Framework.Runtime.Player.Weapons
         private Vector2 viewDelta;
 
         public PlayerController Player => gun.Player;
-        public PlayerMovement Biped => Player.Biped;
-        public PlayerCameraAnimator Camera { get; private set; }
+        public PlayerMovement Biped => Player ? Player.Biped : null;
+        public PlayerCameraAnimator Camera => Player ? Player.Camera : null;
 
         private void Awake()
         {
@@ -50,14 +50,14 @@ namespace Framework.Runtime.Player.Weapons
             animator = GetComponentInChildren<Animator>(true);
         }
 
-        private void Start() { Camera = Player.GetComponent<PlayerCameraAnimator>(); }
-
         private void OnEnable()
         {
             gun.ShootEvent += OnGunShoot;
             gun.EquipEvent += OnGunEquip;
             translationPid.position = dropPose.position;
             rotationPid.position = dropPose.eulerAngles;
+
+            if (!Player) enabled = false;
         }
 
         private void OnDisable()
@@ -65,7 +65,7 @@ namespace Framework.Runtime.Player.Weapons
             gun.ShootEvent -= OnGunShoot; 
             gun.EquipEvent -= OnGunEquip;
         }
-        
+
         private void OnGunEquip()
         {
             translationPid.position = dropPose.position;
