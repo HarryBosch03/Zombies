@@ -106,6 +106,8 @@ GameObject:
   - component: {fileID: 925518556983414567}
   - component: {fileID: 946812931161656939}
   - component: {fileID: 7661717834874383239}
+  - component: {fileID: 3927586239541179883}
+  - component: {fileID: 9018559311799201006}
   m_Layer: 0
   m_Name: Pistol
   m_TagString: Untagged
@@ -141,7 +143,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf72d0d2c13aaea42ae05f2c039d501b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  identifier: 0
   statSheet: {fileID: 11400000, guid: 4a55d06ee14784e4587391d7f94ea498, type: 2}
   viewportFov: 50
   leftHandHold: {fileID: 0}
@@ -150,7 +151,6 @@ MonoBehaviour:
   ShootUnityEvent:
     m_PersistentCalls:
       m_Calls: []
-  fieldOfView: 50
   modelRoot: {fileID: 2740862111294371398}
 --- !u!114 &7661717834874383239
 MonoBehaviour:
@@ -199,6 +199,30 @@ MonoBehaviour:
   reset: 0
   postShootAnimationRef: 
   postShootAnimationDelay: 0
+--- !u!114 &3927586239541179883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8587161786134206647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d72d1525f63f42c3aae746842d7bde7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &9018559311799201006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8587161786134206647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35584162a2d946d3b5c00265e453bc5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3239636451416039192
 PrefabInstance:
   m_ObjectHideFlags: 0

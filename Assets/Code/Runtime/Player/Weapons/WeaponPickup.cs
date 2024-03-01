@@ -1,22 +1,32 @@
-﻿using Framework.Runtime.Interactions;
+﻿using System;
+using Framework.Runtime.Interactions;
+using Framework.Runtime.Utility;
+using UnityEditor.Graphs;
 using UnityEngine;
 
 namespace Framework.Runtime.Player.Weapons
 {
-    public class WeaponPickup : Interactable
+    [RequireComponent(typeof(Interactable), typeof(Weapon))]
+    public class WeaponPickup : MonoBehaviour
     {
-        public WeaponType identifier;
-        
-        private GameObject model;
         private Rigidbody body;
         private new BoxCollider collider;
         private Bounds bounds;
         private float tHeight;
 
-        public override float InteractDuration => ShortInteract;
+        private Interactable interactable;
+        private Weapon weapon;
+        
+        private Transform world;
 
-        private void Start()
+        private void Awake()
         {
+            UseViewportModel();
+
+            interactable = GetComponent<Interactable>();
+            weapon = GetComponent<Weapon>();
+            weapon.StateChangedEvent += OnStateChanged;
+            
             if (!TryGetComponent(out body))
             {
                 body = gameObject.AddComponent<Rigidbody>();
@@ -24,6 +34,54 @@ namespace Framework.Runtime.Player.Weapons
 
             body.drag = 3.0f;
             body.freezeRotation = true;
+
+            Show();
+        }
+
+        private void OnStateChanged(Weapon.WeaponState oldstate, Weapon.WeaponState newstate)
+        {
+            switch (newstate)
+            {
+                case Weapon.WeaponState.Equipped:
+                case Weapon.WeaponState.Unequipped:
+                {
+                    Hide();
+                    break;
+                }
+                case Weapon.WeaponState.OnGround:
+                {
+                    Show();
+                    break;
+                }
+                default:
+                {
+                    throw new ArgumentOutOfRangeException(nameof(newstate), newstate, null);
+                }
+            }
+        }
+
+        private void Show()
+        {
+            world.gameObject.SetActive(true);
+            body.isKinematic = false;
+            collider.enabled = true;
+        }
+
+        private void Hide()
+        {
+            world.gameObject.SetActive(false);
+            body.isKinematic = true;
+            collider.enabled = false;
+        }
+
+        private void OnEnable()
+        {
+            interactable.EndInteractEvent += OnEndInteract;
+        }
+
+        private void OnDisable()
+        {
+            interactable.EndInteractEvent -= OnEndInteract;
         }
 
         private void Update()
@@ -32,10 +90,8 @@ namespace Framework.Runtime.Player.Weapons
             transform.rotation = Quaternion.Euler(0.0f, Time.time * 60.0f, 0.0f) * Quaternion.Euler(-45.0f, 0.0f, 0.0f);
         }
 
-        protected override void FixedUpdate()
+        private void FixedUpdate()
         {
-            base.FixedUpdate();
-            
             var skin = 0.1f;
             var ray = new Ray(body.position + Vector3.up * skin * 0.5f, Vector3.down);
             
@@ -46,35 +102,37 @@ namespace Framework.Runtime.Player.Weapons
             }
         }
 
-        protected override void OnStartInteract()
-        {
-            
-        }
-
-        protected override void OnEndInteract(bool finished)
+        private void OnEndInteract(bool finished, GameObject interactor)
         {
             if (!finished) return;
             
-            var weaponManager = Interactor.GetComponent<PlayerWeaponManager>();
+            var weaponManager = interactor.GetComponent<PlayerWeaponManager>();
             if (!weaponManager) return;
             
-            weaponManager.EquipWeapon(identifier);
+            weaponManager.ChangeWeapon(weapon);
         }
 
-        public void UseModel(GameObject model)
+        private void UseViewportModel()
         {
-            this.model = Instantiate(model);
-            this.model.transform.position = Vector3.zero;
-            this.model.transform.rotation = Quaternion.identity;
+            var viewport = transform.Find("Viewport");
+            
+            world = Instantiate(viewport.gameObject, viewport.parent).transform;
+            world.name = "World";
+            
+            foreach (var t in world.GetComponentsInChildren<Transform>())
+            {
+                t.gameObject.layer = 0;
+            }
 
+            var model = world.Find("Model");
+            
             bounds = new Bounds();
-            foreach (var e in this.model.GetComponentsInChildren<Renderer>(true))
+            foreach (var e in model.GetComponentsInChildren<Renderer>(true))
             {
                 bounds.Encapsulate(e.bounds);
             }
             
-            this.model.transform.SetParent(transform);
-            this.model.transform.localPosition = -bounds.center;
+            model.localPosition = -bounds.center;
 
             if (bounds.size.magnitude > float.Epsilon)
             {
@@ -82,8 +140,9 @@ namespace Framework.Runtime.Player.Weapons
                 collider.size = bounds.size;
                 collider.isTrigger = true;
             }
-            
-            foreach (var e in this.model.GetComponentsInChildren<Animator>()) e.enabled = false;
+
+            var animator = model.GetComponent<Animator>();
+            if (animator) Destroy(animator);
         }
     }
 }

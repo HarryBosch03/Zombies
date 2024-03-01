@@ -4,17 +4,19 @@ using Framework.Runtime.Data;
 using Framework.Runtime.Utility;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Framework.Runtime.Player.Weapons
 {
-    public class PlayerGun : PlayerWeapon
+    public class Gun : Weapon
     {
         public int ammo;
         public UnityEvent ShootUnityEvent;
 
         [HideInInspector]
-        public float fieldOfView = 50.0f;
-        public Transform modelRoot;
+        public Transform viewportModelRoot;
+        public Transform viewport;
+        public Transform world;
 
         private PlayerController player;
         private float lastFireTime;
@@ -28,51 +30,61 @@ namespace Framework.Runtime.Player.Weapons
         private Vector2 recoilPosition;
         private Vector2 recoilVelocity;
         
-        public event Action EquipEvent;
         public event Action ShootEvent;
 
         public GunStatSheet StatSheet => (GunStatSheet)statSheet;
         public override string AmmoLabel => ammo >= 0 ? $"{ammo}/{StatSheet.maxAmmo}" : "--/--";
-        public Vector3? MuzzlePosition => modelRoot && StatSheet ? modelRoot.TransformPoint(StatSheet.muzzleOffset * 0.01f) : null;
-        public Quaternion? MuzzleOrientation => modelRoot && StatSheet ? modelRoot.rotation * Quaternion.LookRotation(StatSheet.muzzleForwardDirection).normalized : null;
+        public Vector3? MuzzlePosition => viewportModelRoot && StatSheet ? viewportModelRoot.TransformPoint(StatSheet.muzzleOffset * 0.01f) : null;
+        public Quaternion? MuzzleOrientation => viewportModelRoot && StatSheet ? viewportModelRoot.rotation * Quaternion.LookRotation(StatSheet.muzzleForwardDirection).normalized : null;
         public Vector3? MuzzleDirection => MuzzleOrientation * Vector3.forward;
         public float AimPercent { get; private set; }
         public bool IsReloading { get; private set; }
         public static bool ToggleAim => Settings.Index<bool>("ToggleAim");
         
-        public override float ViewportFieldOfView => fieldOfView;
-
         protected override void Awake()
         {
             player = GetComponentInParent<PlayerController>();
 
             base.Awake();
 
-            flash = viewport.Find<ParticleSystem>("Flash");
-            smoke = viewport.Find<ParticleSystem>("Smoke");
-
             ammo = StatSheet.maxAmmo;
+
+            StateChangedEvent += OnStateChanged;
         }
 
-        public override void OnEquip()
+        private void OnStateChanged(WeaponState oldState, WeaponState newState)
         {
-            equipTime = Time.time; 
-            EquipEvent?.Invoke();
-        }
-
-        public override void OnUnequip()
-        {
-            StopCoroutine(nameof(ReloadRoutine));
-            IsReloading = false;
-            AimPercent = 0.0f;
-            isAiming = false;
+            switch (newState)
+            {
+                case WeaponState.Equipped:
+                {
+                    equipTime = Time.time;
+                    break;
+                }
+                case WeaponState.Unequipped:
+                {
+                    StopCoroutine(nameof(ReloadRoutine));
+                    IsReloading = false;
+                    AimPercent = 0.0f;
+                    isAiming = false;
+                    break;
+                }
+                case WeaponState.OnGround:
+                {
+                    break;
+                }
+                default:
+                {
+                    throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
+                }
+            }
         }
 
         protected override void Update()
         {
             base.Update();
 
-            player.Biped.viewFrameOffset += recoilPosition;
+            if (player) player.Biped.viewFrameOffset += recoilPosition;
         }
 
         protected override void UpdateEquipped()
@@ -206,7 +218,5 @@ namespace Framework.Runtime.Player.Weapons
                 Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(0.0f, -StatSheet.args.spread, 10.0f).normalized);
             }
         }
-        
-        
     }
 }

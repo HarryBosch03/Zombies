@@ -7224,6 +7224,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1026080753}
   - component: {fileID: 1026080754}
+  - component: {fileID: 1026080755}
   m_Layer: 0
   m_Name: Lever
   m_TagString: Untagged
@@ -7274,6 +7275,18 @@ MonoBehaviour:
     animateRotation: 1
     rotationMin: {x: 0, y: 0, z: 15}
     rotationMax: {x: 0, y: 0, z: -15}
+--- !u!114 &1026080755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1026080752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d72d1525f63f42c3aae746842d7bde7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1051363842
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7641,7 +7654,6 @@ GameObject:
   - component: {fileID: 1306353981}
   - component: {fileID: 1306353983}
   - component: {fileID: 1306353984}
-  - component: {fileID: 1306353985}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -7732,7 +7744,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53e0bee86ac9410cb93209086dc614c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isOwner: 0
   moveSpeed: 12
   accelerationTime: 0.1
   jumpHeight: 2.2
@@ -7771,65 +7782,6 @@ MonoBehaviour:
       ignoreLocationalDamage: 0
     range: 0
     radius: 0
---- !u!114 &1306353985
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1306353978}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <IsNested>k__BackingField: 0
-  <ComponentIndex>k__BackingField: 0
-  <ObjectId>k__BackingField: 0
-  <IsDeinitializing>k__BackingField: 1
-  <PredictedSpawn>k__BackingField: {fileID: 0}
-  _networkBehaviours:
-  - {fileID: 1306353983}
-  <ParentNetworkObject>k__BackingField: {fileID: 0}
-  <ChildNetworkObjects>k__BackingField: []
-  <RuntimeParentNetworkObject>k__BackingField: {fileID: 0}
-  <RuntimeParentTransform>k__BackingField: {fileID: 0}
-  <RuntimeChildNetworkObjects>k__BackingField: []
-  SerializedTransformProperties:
-    Position: {x: -23.6, y: 0, z: -18.9}
-    Rotation: {x: 0, y: 0, z: 0, w: 1}
-    LocalScale: {x: 1, y: 1, z: 1}
-  _isNetworked: 1
-  _isGlobal: 0
-  _initializeOrder: 0
-  _defaultDespawnType: 0
-  _disabledNetworkBehavioursInitialized: 0
-  _editorOwnerId: 0
-  NetworkObserver: {fileID: 0}
-  _networkObserverInitiliazed: 0
-  _renderersPopulated: 0
-  _lastClientHostVisibility: 0
-  _hashGrid: {fileID: 0}
-  _nextHashGridUpdateTime: 0
-  _isStatic: 0
-  _hashGridPosition: {x: 2147483647, y: 2147483647}
-  <IsClientInitialized>k__BackingField: 0
-  <IsServerInitialized>k__BackingField: 0
-  <NetworkManager>k__BackingField: {fileID: 0}
-  <ServerManager>k__BackingField: {fileID: 0}
-  <ClientManager>k__BackingField: {fileID: 0}
-  <ObserverManager>k__BackingField: {fileID: 0}
-  <TransportManager>k__BackingField: {fileID: 0}
-  <TimeManager>k__BackingField: {fileID: 0}
-  <SceneManager>k__BackingField: {fileID: 0}
-  <PredictionManager>k__BackingField: {fileID: 0}
-  <RollbackManager>k__BackingField: {fileID: 0}
-  <PrefabId>k__BackingField: 0
-  <SpawnableCollectionId>k__BackingField: 0
-  _scenePathHash: 3869083848
-  <SceneId>k__BackingField: 16617588596260081840
-  <AssetPathHash>k__BackingField: 0
-  _rpcLinkIndexes: []
 --- !u!65 &1330550750
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8113,6 +8065,14 @@ PrefabInstance:
     - target: {fileID: 1084296159693019993, guid: a9cd406c9781bbc4e97f3c9362915a70, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 2211358248647625584, guid: a9cd406c9781bbc4e97f3c9362915a70, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2211358248647625584, guid: a9cd406c9781bbc4e97f3c9362915a70, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9117636732120270917, guid: a9cd406c9781bbc4e97f3c9362915a70, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8977,6 +8937,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 113459753}
     m_Modifications:
+    - target: {fileID: 43459554761358823, guid: e115f576e32eacd45bc278692c77099f, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 11115d68ff7549747a4f4a7270f3fc8b, type: 2}
+    - target: {fileID: 43459554761358823, guid: e115f576e32eacd45bc278692c77099f, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 5258645068192990489, guid: 11115d68ff7549747a4f4a7270f3fc8b, type: 2}
     - target: {fileID: 43459555125737687, guid: e115f576e32eacd45bc278692c77099f, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

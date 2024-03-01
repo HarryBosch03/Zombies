@@ -7,8 +7,6 @@ namespace Framework.Runtime.Core
     [DisallowMultipleComponent]
     public class PlayerMovement : MonoBehaviour
     {
-        public bool isOwner;
-
         #region Properties
 
         public float moveSpeed = 12.0f;

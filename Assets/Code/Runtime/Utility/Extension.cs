@@ -69,5 +69,24 @@ namespace Framework.Runtime.Utility
             transform.localRotation = Quaternion.identity;
             transform.localScale = Vector3.one;
         }
+
+        public static Transform Get(this Transform transform, string path)
+        {
+            var elements = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var head = transform;
+            foreach (var element in elements)
+            {
+                var child = head.Find(element);
+                if (!child)
+                {
+                    child = new GameObject(element).transform;
+                    child.SetParent(head);
+                    child.ResetPose();
+                }
+
+                head = child;
+            }
+            return head;
+        }
     }
 }

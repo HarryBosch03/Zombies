@@ -3,14 +3,14 @@ using UnityEngine;
 
 namespace Framework.Runtime.Interactions
 {
-    public abstract class Interactable : MonoBehaviour
+    public class Interactable : MonoBehaviour
     {
         public const float ShortInteract = 0.3f;
         
         private GameObject interactor;
         private Action finishInteractionCallback;
 
-        public abstract float InteractDuration { get; }
+        public virtual float InteractDuration => ShortInteract;
         public float InteractionTimer { get; private set; }
         public float InteractionPercent => InteractionTimer / InteractDuration;
         
@@ -40,7 +40,7 @@ namespace Framework.Runtime.Interactions
             this.interactor = interactor;
             this.finishInteractionCallback = finishInteractionCallback;
 
-            OnStartInteract();
+            StartInteractEvent?.Invoke(interactor);
             return true;
         }
 
@@ -48,7 +48,7 @@ namespace Framework.Runtime.Interactions
 
         private void EndInteract(bool finished)
         {
-            OnEndInteract(finished);
+            EndInteractEvent?.Invoke(finished, interactor);
             
             if (finished) InteractionTimer = 0.0f;
             interactor = null;
@@ -56,7 +56,7 @@ namespace Framework.Runtime.Interactions
             finishInteractionCallback?.Invoke();
         }
 
-        protected abstract void OnStartInteract();
-        protected abstract void OnEndInteract(bool finished);
+        public event Action<GameObject> StartInteractEvent;
+        public event Action<bool, GameObject> EndInteractEvent;
     }
 }

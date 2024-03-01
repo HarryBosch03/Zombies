@@ -30,7 +30,7 @@ namespace Framework.Runtime.Player
         public float FovOverrideBlend { get; set; }
         public float FunctionalZoom { get; set; } = 1.0f;
         public float EffectZoom { get; set; } = 1.0f;
-        public Quaternion RotationOffset { get; set; }
+        public Quaternion RotationOffset { get; set; } = Quaternion.identity;
 
         private void Awake()
         {

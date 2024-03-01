@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace Framework.Runtime.Interactions
 {
-    public class ProceduralButton : Interactable
+    [RequireComponent(typeof(Interactable))]
+    public class ProceduralButton : MonoBehaviour
     {
         public bool latch;
         public float spring = 600.0f;
@@ -20,23 +21,33 @@ namespace Framework.Runtime.Interactions
         public AnimationDriver[] drivers;
         
         private float cVelocity;
+        private Interactable interactable;
 
         public Action<bool> stateChangedEvent;
 
-        public override float InteractDuration => ShortInteract;
+        private void Awake()
+        {
+            interactable = GetComponent<Interactable>();
+        }
 
-        protected override void OnStartInteract() { }
+        private void OnEnable()
+        {
+            interactable.EndInteractEvent += OnEndInteract;
+        }
 
-        protected override void OnEndInteract(bool finished)
+        private void OnDisable()
+        {
+            interactable.EndInteractEvent -= OnEndInteract;
+        }
+
+        private void OnEndInteract(bool finished, GameObject interactor)
         {
             if (!finished) return;
             ChangeState();
         }
 
-        protected override void FixedUpdate()
+        protected void FixedUpdate()
         {
-            base.FixedUpdate();
-
             var force = (tPosition - cPosition) * spring - cVelocity * damper;
             cPosition += cVelocity * Time.deltaTime;
             cVelocity += force * Time.deltaTime;

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Framework.Runtime.Player.Weapons;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,25 +10,16 @@ namespace Framework.Runtime.Player
     {
         public const int MaxEquippedWeapons = 2;
 
-        public WeaponType[] weaponSlots;
-
+        private Transform weaponParent;
         private PlayerController player;
-        private int currentWeaponRegistryIndex;
-        private List<PlayerWeapon> registeredWeapons = new();
+        private int weaponIndex;
 
-        public PlayerWeapon CurrentWeapon => currentWeaponRegistryIndex >= 0 && currentWeaponRegistryIndex < registeredWeapons.Count ? registeredWeapons[currentWeaponRegistryIndex] : null;
+        public Weapon CurrentWeapon { get; private set; }
 
         private void Awake()
         {
             player = GetComponent<PlayerController>();
-
-            var parent = transform.Find("View/Weapons");
-            foreach (Transform e in parent)
-            {
-                var weapon = e.GetComponent<PlayerWeapon>();
-                if (!weapon) continue;
-                registeredWeapons.Add(weapon);
-            }
+            weaponParent = transform.Find("View/Weapons");
 
             var inputAsset = player.inputAsset;
             for (var i = 0; i < MaxEquippedWeapons; i++)
@@ -42,35 +32,51 @@ namespace Framework.Runtime.Player
 
         private void Start()
         {
-            EquipWeapon(weaponSlots[0]);
+            for (var i = 0; i < weaponParent.childCount; i++)
+            {
+                var weapon = weaponParent.GetChild(i).GetComponent<Weapon>();
+                if (!weapon) continue;
+                weapon.Pickup(player, weaponParent, i, false);
+            }
+            EquipWeapon(0);
         }
 
         private Action<InputAction.CallbackContext> SwitchWeaponInputCallback(int slot) => _ =>
         {
-            EquipWeapon(weaponSlots[slot]);
+            EquipWeapon(slot);
         };
 
-        public void EquipWeaponFromRegistry(int index)
+        public void EquipWeapon(int index)
         {
             if (CurrentWeapon) CurrentWeapon.Unequip();
-            currentWeaponRegistryIndex = index;
+            weaponIndex = index;
+            CurrentWeapon = index >= 0 && index < weaponParent.childCount ? weaponParent.GetChild(index).GetComponent<Weapon>() : null;
             if (CurrentWeapon) CurrentWeapon.Equip();
         }
 
-        public void EquipWeapon(WeaponType type)
+        public void ChangeWeapon(Weapon weapon)
         {
-            if (!string.IsNullOrWhiteSpace(name))
+            if (!CanChangeWeapon(weapon)) return;
+            
+            if (CurrentWeapon)
             {
-                for (var i = 0; i < registeredWeapons.Count; i++)
-                {
-                    var w = registeredWeapons[i];
-                    if (w.identifier != type) continue;
-                    EquipWeaponFromRegistry(i);
-                    return;
-                }
+                CurrentWeapon.Drop();
             }
+            CurrentWeapon = weapon;
+            if (CurrentWeapon)
+            {
+                CurrentWeapon.Pickup(player, weaponParent, weaponIndex, true);
+            }
+        }
 
-            EquipWeaponFromRegistry(-1);
+        private bool CanChangeWeapon(Weapon weapon)
+        {
+            foreach (Transform other in weaponParent)
+            {
+                if (!other.TryGetComponent(out Weapon otherWeapon)) continue;
+                if (weapon.statSheet == otherWeapon.statSheet) return false;
+            }
+            return true;
         }
     }
 }
