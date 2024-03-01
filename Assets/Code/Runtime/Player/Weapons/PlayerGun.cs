@@ -48,8 +48,8 @@ namespace Framework.Runtime.Player.Weapons
 
             base.Awake();
 
-            flash = viewport.Find<ParticleSystem>("Flash");
-            smoke = viewport.Find<ParticleSystem>("Smoke");
+            flash = Viewport.Find<ParticleSystem>("Flash");
+            smoke = Viewport.Find<ParticleSystem>("Smoke");
 
             ammo = StatSheet.maxAmmo;
         }
@@ -106,11 +106,11 @@ namespace Framework.Runtime.Player.Weapons
 
                 AimPercent += (isAiming ? 1 : -1) / StatSheet.aimTime * Time.deltaTime;
                 AimPercent = Mathf.Clamp01(AimPercent);
-
-                Player.Camera.FovOverride = GunStatSheet.AimFov;
-                Player.Camera.FovOverrideBlend = AimPercent;
-                Player.Camera.FunctionalZoom = Mathf.Lerp(1.0f, StatSheet.aimZoom, AimPercent);
             }
+            
+            Player.Camera.FovOverride = GunStatSheet.AimFov;
+            Player.Camera.FovOverrideBlend = AimPercent;
+            Player.Camera.FunctionalZoom = Mathf.Lerp(1.0f, StatSheet.aimZoom, AimPercent);
         }
 
         private void FixedUpdate()

@@ -5,7 +5,7 @@ namespace Framework.Runtime.Player.Weapons
 {
     public class WeaponPickup : Interactable
     {
-        public WeaponType identifier;
+        public WeaponStatSheet identifier;
         
         private GameObject model;
         private Rigidbody body;
@@ -84,6 +84,16 @@ namespace Framework.Runtime.Player.Weapons
             }
             
             foreach (var e in this.model.GetComponentsInChildren<Animator>()) e.enabled = false;
+        }
+
+        public static WeaponPickup Of(PlayerWeapon weapon)
+        {
+            var pickup = new GameObject(weapon.name).AddComponent<WeaponPickup>();
+            pickup.identifier = weapon.statSheet;
+            pickup.transform.position = weapon.transform.position;
+            pickup.UseModel(weapon.Model);
+
+            return pickup;
         }
     }
 }

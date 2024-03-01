@@ -11,13 +11,13 @@ namespace Framework.Runtime.Player
     {
         public const int MaxEquippedWeapons = 2;
 
-        public WeaponType[] weaponSlots;
+        public int[] weaponSlots;
 
         private PlayerController player;
-        private int currentWeaponRegistryIndex;
+        private int slotIndex;
         private List<PlayerWeapon> registeredWeapons = new();
 
-        public PlayerWeapon CurrentWeapon => currentWeaponRegistryIndex >= 0 && currentWeaponRegistryIndex < registeredWeapons.Count ? registeredWeapons[currentWeaponRegistryIndex] : null;
+        public PlayerWeapon CurrentWeapon => slotIndex >= 0 && slotIndex < weaponSlots.Length ? registeredWeapons[slotIndex] : null;
 
         private void Awake()
         {
@@ -42,35 +42,35 @@ namespace Framework.Runtime.Player
 
         private void Start()
         {
-            EquipWeapon(weaponSlots[0]);
+            EquipWeapon(0);
         }
 
         private Action<InputAction.CallbackContext> SwitchWeaponInputCallback(int slot) => _ =>
         {
-            EquipWeapon(weaponSlots[slot]);
+            EquipWeapon(slot);
         };
 
-        public void EquipWeaponFromRegistry(int index)
+        public void EquipWeapon(int slot)
         {
             if (CurrentWeapon) CurrentWeapon.Unequip();
-            currentWeaponRegistryIndex = index;
+            slotIndex = slot;
             if (CurrentWeapon) CurrentWeapon.Equip();
         }
 
-        public void EquipWeapon(WeaponType type)
+        public void EquipWeapon(WeaponStatSheet identifier)
         {
             if (!string.IsNullOrWhiteSpace(name))
             {
                 for (var i = 0; i < registeredWeapons.Count; i++)
                 {
                     var w = registeredWeapons[i];
-                    if (w.identifier != type) continue;
-                    EquipWeaponFromRegistry(i);
+                    if (w.statSheet != identifier) continue;
+                    EquipWeapon(i);
                     return;
                 }
             }
 
-            EquipWeaponFromRegistry(-1);
+            EquipWeapon(-1);
         }
     }
 }

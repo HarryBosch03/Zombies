@@ -6,7 +6,6 @@ namespace Framework.Runtime.Player.Weapons
 {
     public abstract class PlayerWeapon : MonoBehaviour
     {
-        public WeaponType identifier;
         public WeaponStatSheet statSheet;
         
         [Range(10.0f, 120.0f)]
@@ -17,12 +16,9 @@ namespace Framework.Runtime.Player.Weapons
         [HideInInspector] public Transform leftHandHold;
         [HideInInspector] public Transform rightHandHold;
 
-        protected Transform viewport;
-        protected GameObject viewportModel;
+        protected Transform Viewport { get; private set; }
+        public GameObject Model { get; private set; }
         
-        protected Transform world;
-        protected GameObject worldModel;
-
         private static RenderObjects[] viewportRenderObjects;
 
         public Camera MainCam { get; private set; }
@@ -38,62 +34,26 @@ namespace Framework.Runtime.Player.Weapons
         {
             MainCam = Camera.main;
             Player = GetComponentInParent<PlayerController>();
-
-            viewport = transform.Find("Viewport");
-            viewportModel = viewport.FindGameObject("Model");
-
-            InstanceItemModel();
             
+            Viewport = transform.Find("Viewport");
+            Model = Viewport.FindGameObject("Model");
+            
+            if (!Player)
+            {
+                WeaponPickup.Of(this);
+                Destroy(gameObject);
+                return;
+            }
+   
             leftHandHold = transform.DeepFind("Hand.L");
             rightHandHold = transform.DeepFind("Hand.R");
 
-            foreach (var t in viewport.GetComponentsInChildren<Transform>())
+            foreach (var t in Viewport.GetComponentsInChildren<Transform>())
             {
                 t.gameObject.layer = ViewportLayer;
             }
-            
+
             Unequip();
-        }
-
-        private void InstanceItemModel()
-        {
-            world = new GameObject("World").transform;
-            world.SetParent(transform);
-            world.ResetPose();
-
-            worldModel = Instantiate(viewportModel);
-            worldModel.transform.ResetPose();
-            
-            var bounds = new Bounds();
-            foreach (var e in worldModel.GetComponentsInChildren<Renderer>(true))
-            {
-                bounds.Encapsulate(e.bounds);
-            }
-            
-            worldModel.transform.SetParent(world);
-            worldModel.transform.localPosition = -bounds.center;
-
-            if (bounds.size.magnitude > float.Epsilon)
-            {
-                var collider = gameObject.AddComponent<BoxCollider>();
-                collider.size = bounds.size;
-                collider.isTrigger = true;
-            }
-            
-            foreach (var e in worldModel.GetComponentsInChildren<Animator>()) Destroy(e);
-            
-            world.gameObject.SetActive(false);
-        }
-
-        private WeaponPickup SpawnPickup()
-        {
-            var instance = new GameObject($"Weapon Pickup [{name}]").AddComponent<WeaponPickup>();
-
-            instance.transform.position = transform.position;
-            instance.identifier = identifier;
-            instance.UseModel(viewportModel);
-            
-            return instance;
         }
 
         private void OnEnable()
@@ -129,9 +89,9 @@ namespace Framework.Runtime.Player.Weapons
 
         private void SetEquipState(bool state)
         {
-            if (viewportModel)
+            if (Viewport)
             {
-                viewportModel.gameObject.SetActive(state);
+                Viewport.gameObject.SetActive(state);
             }
 
             Equipped = state;
