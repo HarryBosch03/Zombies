@@ -15,8 +15,6 @@ namespace Framework.Runtime.Player.Weapons
 
         [HideInInspector]
         public Transform viewportModelRoot;
-        public Transform viewport;
-        public Transform world;
 
         private PlayerController player;
         private float lastFireTime;

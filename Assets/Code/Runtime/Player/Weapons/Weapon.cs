@@ -16,6 +16,9 @@ namespace Framework.Runtime.Player.Weapons
         [Range(10.0f, 120.0f)]
         public float viewportFov = 50.0f;
         
+        [HideInInspector] public Transform viewport;
+        [HideInInspector] public Transform world;
+        
         [HideInInspector] public Transform leftHandHold;
         [HideInInspector] public Transform rightHandHold;
 
