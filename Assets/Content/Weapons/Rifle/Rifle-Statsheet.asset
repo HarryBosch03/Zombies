@@ -24,7 +24,7 @@ MonoBehaviour:
     spread: 0
     count: 1
   singleFire: 0
-  fireRate: 660
+  fireRate: 800
   aimTime: 0.15
   aimZoom: 1
   muzzleOffset: {x: 0, y: -0.18, z: 65.87}
@@ -35,7 +35,7 @@ MonoBehaviour:
   reloadLoopDuration: 1.8
   postReloadDuration: 0
   equipTime: 0.2
-  viewRecoilMedian: {x: 0, y: 40}
-  viewRecoilVariance: {x: 12, y: 5}
+  viewRecoilMedian: {x: 0, y: 60}
+  viewRecoilVariance: {x: 40, y: 5}
   recoilSpring: 60
-  recoilDamping: 15
+  recoilDamping: 30
