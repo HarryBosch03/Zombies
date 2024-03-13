@@ -25,7 +25,6 @@ namespace Framework.Runtime.Player.Weapons
         
         private bool isAiming;
 
-        private Vector2 recoilPosition;
         private Vector2 recoilVelocity;
         
         public event Action EquipEvent;
@@ -72,7 +71,7 @@ namespace Framework.Runtime.Player.Weapons
         {
             base.Update();
 
-            player.Biped.viewFrameOffset += recoilPosition;
+            if (player) player.Biped.viewRotation += recoilVelocity * Time.deltaTime;
         }
 
         protected override void UpdateEquipped()
@@ -120,9 +119,7 @@ namespace Framework.Runtime.Player.Weapons
 
         private void UpdateRecoilKinematics()
         {
-            var force = -recoilPosition * StatSheet.recoilSpring - recoilVelocity * StatSheet.recoilDamping;
-            
-            recoilPosition += recoilVelocity * Time.deltaTime;
+            var force = -recoilVelocity * gunStatSheet.recoilDamping;
             recoilVelocity += force * Time.deltaTime;
         }
 
