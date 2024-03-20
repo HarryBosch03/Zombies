@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Framework.Runtime.Player.Weapons;
+using Framework.Runtime.Utility;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,13 +13,13 @@ namespace Framework.Runtime.Player
     {
         public const int MaxEquippedWeapons = 2;
 
-        public WeaponType[] weaponSlots;
+        public int[] equippedWeapons;
+        public int equippedWeaponIndex;
 
         private PlayerController player;
-        private int currentWeaponRegistryIndex;
-        private List<PlayerWeapon> registeredWeapons = new();
+        public List<PlayerWeapon> weaponRegister { get; set; } = new();
 
-        public PlayerWeapon CurrentWeapon => currentWeaponRegistryIndex >= 0 && currentWeaponRegistryIndex < registeredWeapons.Count ? registeredWeapons[currentWeaponRegistryIndex] : null;
+        public PlayerWeapon currentWeapon => weaponRegister.SafeIndex(equippedWeapons.SafeIndex(equippedWeaponIndex, -1));
 
         private void Awake()
         {
@@ -28,7 +30,7 @@ namespace Framework.Runtime.Player
             {
                 var weapon = e.GetComponent<PlayerWeapon>();
                 if (!weapon) continue;
-                registeredWeapons.Add(weapon);
+                weaponRegister.Add(weapon);
             }
 
             var inputAsset = player.inputAsset;
@@ -38,39 +40,75 @@ namespace Framework.Runtime.Player
                 if (action == null) continue;
                 action.performed += SwitchWeaponInputCallback(i);
             }
+
+            if (equippedWeapons.Length != MaxEquippedWeapons)
+            {
+                var newList = new int[MaxEquippedWeapons];
+                for (var i = 0; i < equippedWeapons.Length && i < MaxEquippedWeapons; i++)
+                {
+                    newList[i] = equippedWeapons[i];
+                }
+                for (var i = equippedWeapons.Length; i < MaxEquippedWeapons; i++)
+                {
+                    newList[i] = -1;
+                }
+                equippedWeapons = newList;
+            }
         }
 
         private void Start()
         {
-            EquipWeapon(weaponSlots[0]);
+            SwitchWeaponSlot(0);
         }
 
         private Action<InputAction.CallbackContext> SwitchWeaponInputCallback(int slot) => _ =>
         {
-            EquipWeapon(weaponSlots[slot]);
+            SwitchWeaponSlot(slot);
         };
 
-        public void EquipWeaponFromRegistry(int index)
+        public void PickupWeapon(string weaponIdentifier)
         {
-            if (CurrentWeapon) CurrentWeapon.Unequip();
-            currentWeaponRegistryIndex = index;
-            if (CurrentWeapon) CurrentWeapon.Equip();
+            for (var i = 0; i < equippedWeapons.Length; i++)
+            {
+                var weapon = weaponRegister.ElementAtOrDefault(equippedWeapons[i]);
+                if (!weapon || weapon.identifier != weaponIdentifier) continue;
+                
+                SwitchWeaponSlot(i);
+                return;
+            }
+            
+            var registryIndex = GetRegistryIndexFromIdentifier(weaponIdentifier);
+            if (registryIndex == -1) throw new Exception($"Could not find weapon \"{weaponIdentifier}\" in registry");
+            
+            var index = equippedWeaponIndex;
+            for (var i = 0; i < equippedWeapons.Length; i++)
+            {
+                if (equippedWeapons[i] != -1) continue;
+                index = i;
+                break;
+            }
+            
+            if (currentWeapon) currentWeapon.Unequip();
+            equippedWeapons[index] = registryIndex;
+            if (currentWeapon) currentWeapon.Equip();
         }
 
-        public void EquipWeapon(WeaponType type)
+        private int GetRegistryIndexFromIdentifier(string weaponIdentifier)
         {
-            if (!string.IsNullOrWhiteSpace(name))
+            for (var i = 0; i < weaponRegister.Count; i++)
             {
-                for (var i = 0; i < registeredWeapons.Count; i++)
-                {
-                    var w = registeredWeapons[i];
-                    if (w.identifier != type) continue;
-                    EquipWeaponFromRegistry(i);
-                    return;
-                }
+                var weapon = weaponRegister[i];
+                if (weapon.identifier == weaponIdentifier) return i;
             }
 
-            EquipWeaponFromRegistry(-1);
+            return -1;
+        }
+        
+        public void SwitchWeaponSlot(int index)
+        {
+            if (currentWeapon) currentWeapon.Unequip();
+            equippedWeaponIndex = index;
+            if (currentWeapon) currentWeapon.Equip();
         }
     }
 }

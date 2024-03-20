@@ -40,9 +40,9 @@ namespace Framework.Runtime.Player.Weapons
         private Animator animator;
         private Vector2 viewDelta;
 
-        public PlayerController Player => gun.Player;
-        public PlayerMovement Biped => Player ? Player.Biped : null;
-        public PlayerCameraAnimator Camera => Player ? Player.Camera : null;
+        public PlayerController player => gun.player;
+        public PlayerMovement biped => player ? player.biped : null;
+        public new PlayerCameraAnimator camera => player ? player.camera : null;
 
         private void Awake()
         {
@@ -57,7 +57,7 @@ namespace Framework.Runtime.Player.Weapons
             translationPid.position = dropPose.position;
             rotationPid.position = dropPose.eulerAngles;
 
-            if (!Player) enabled = false;
+            if (!player) enabled = false;
         }
 
         private void OnDisable()
@@ -110,7 +110,7 @@ namespace Framework.Runtime.Player.Weapons
             }
 
             var translationLag = GetPropertyFromPose(p => p.translationLag, Mathf.Lerp);
-            var offset = Biped.view.InverseTransformVector(Biped.body.velocity) * translationLag;
+            var offset = biped.view.InverseTransformVector(biped.body.velocity) * translationLag;
             translationPid.force += offset;
 
             viewDelta /= Time.deltaTime;
@@ -129,15 +129,15 @@ namespace Framework.Runtime.Player.Weapons
 
         private void Update()
         {
-            if (gun.Equipped)
+            if (gun.equipped)
             {
-                Camera.RotationOffset = Quaternion.Slerp(Quaternion.identity, rotationPid.position.Euler(), cameraInfluence);
+                camera.rotationOffset = Quaternion.Slerp(Quaternion.identity, rotationPid.position.Euler(), cameraInfluence);
             }
         }
 
         private Vector3 GetFinalPosition()
         {
-            var position = Biped.view.TransformVector(translationPid.InterpolatedPosition);
+            var position = biped.view.TransformVector(translationPid.InterpolatedPosition);
             position += root.parent.position;
             return position;
         }
@@ -147,15 +147,15 @@ namespace Framework.Runtime.Player.Weapons
             var finalPosition = GetFinalPosition();
             root.position = finalPosition;
 
-            viewDelta += Player.ViewInput;
+            viewDelta += player.viewInput;
             
-            root.rotation = Biped.view.rotation * Quaternion.Euler(rotationPid) * Quaternion.Euler(rotationCorrection);
+            root.rotation = biped.view.rotation * Quaternion.Euler(rotationPid) * Quaternion.Euler(rotationCorrection);
 
             var fieldOfView = Mathf.Lerp
             (
                 idlePose.fieldOfView,
                 aimPose.fieldOfView,
-                gun.AimPercent
+                gun.aimPercent
             );
             gun.fieldOfView = fieldOfView;
         }
@@ -164,8 +164,8 @@ namespace Framework.Runtime.Player.Weapons
         {
             if (forcePose) return get(forcePose);
                 
-            if (gun.IsReloading && dropOnReload) return get(dropPose);
-            return lerp(get(idlePose), get(aimPose), gun.AimPercent);
+            if (gun.isReloading && dropOnReload) return get(dropPose);
+            return lerp(get(idlePose), get(aimPose), gun.aimPercent);
         }
     }
 }

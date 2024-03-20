@@ -14,32 +14,32 @@ namespace Framework.Runtime.Npc
         private NavMeshPath navPath;
         private int navPathIndex;
 
-        private bool PathActive => navPathIndex < (navPath?.corners.Length ?? 0);
+        private bool pathActive => navPathIndex < (navPath?.corners.Length ?? 0);
 
-        public PlayerMovement Movement { get; private set; }
-        public HealthController Health { get; private set; }
-        public Rigidbody Body => Movement.body;
+        public PlayerMovement movement { get; private set; }
+        public HealthController health { get; private set; }
+        public Rigidbody body => movement.body;
 
-        public bool FaceMovement { get; set; } = true;
-        public float MoveSpeed { get; set; } = 1.0f;
+        public bool faceMovement { get; set; } = true;
+        public float moveSpeed { get; set; } = 1.0f;
         
         private void Awake()
         {
-            Movement = GetComponent<PlayerMovement>();
-            Health = GetComponent<HealthController>();
+            movement = GetComponent<PlayerMovement>();
+            health = GetComponent<HealthController>();
 
             navPath = new NavMeshPath();
         }
 
         private void FixedUpdate()
         {
-            Move();
             UpdatePath();
+            Move();
         }
 
         private void UpdatePath()
         {
-            if (!PathActive) return;
+            if (!pathActive) return;
 
             var corner = navPath.corners[navPathIndex];
             if ((corner - transform.position).magnitude < PathingThreshold)
@@ -50,13 +50,13 @@ namespace Framework.Runtime.Npc
 
         private void Move()
         {
-            var targetPosition = PathActive ? navPath.corners[navPathIndex] : transform.position;
+            var targetPosition = pathActive ? navPath.corners[navPathIndex] : transform.position;
 
             var direction = targetPosition - transform.position;
             direction.y = 0.0f;
-            Movement.moveInput = direction * MoveSpeed;
+            movement.moveInput = direction * moveSpeed;
 
-            if (FaceMovement && direction.magnitude > 0.1f)
+            if (faceMovement && direction.magnitude > 0.1f)
             {
                 LookDirection(direction.normalized);
             }
@@ -75,7 +75,7 @@ namespace Framework.Runtime.Npc
                 return;
             }
             
-            if (PathActive)
+            if (pathActive)
             {
                 var end = navPath.corners[^1];
                 if ((end - position).magnitude < PathingThreshold) return;
@@ -88,13 +88,13 @@ namespace Framework.Runtime.Npc
         public void LookAt(GameObject gameObject)
         {
             var center = IPersonality.LookTargetOf(gameObject);
-            LookDirection(center - Movement.view.transform.position);
+            LookDirection(center - movement.view.transform.position);
         }
         
         public void LookDirection(Vector3 direction)
         {
             direction.Normalize();
-            Movement.viewRotation = new Vector2
+            movement.viewRotation = new Vector2
             {
                 x = Mathf.Atan2(direction.x, direction.z),
                 y = Mathf.Asin(direction.y)
@@ -103,7 +103,7 @@ namespace Framework.Runtime.Npc
 
         private void OnDrawGizmosSelected()
         {
-            if (PathActive)
+            if (pathActive)
             {
                 Gizmos.color = Color.yellow;
                 

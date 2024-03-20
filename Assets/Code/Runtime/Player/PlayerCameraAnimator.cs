@@ -19,18 +19,18 @@ namespace Framework.Runtime.Player
         public PlayerCameraAnimatorSettings settings;
 
         private Vector3 smoothedPosition;
-        private Quaternion smoothedRotation;
+        private Quaternion smoothedRotation = Quaternion.identity;
 
         private PlayerController controller;
         private Camera mainCamera;
         private float distance;
 
-        public PlayerMovement Biped => controller.Biped;
-        public float FovOverride { get; set; } = 50.0f;
-        public float FovOverrideBlend { get; set; }
-        public float FunctionalZoom { get; set; } = 1.0f;
-        public float EffectZoom { get; set; } = 1.0f;
-        public Quaternion RotationOffset { get; set; }
+        public PlayerMovement biped => controller.biped;
+        public float fovOverride { get; set; } = 50.0f;
+        public float fovOverrideBlend { get; set; }
+        public float functionalZoom { get; set; } = 1.0f;
+        public float effectZoom { get; set; } = 1.0f;
+        public Quaternion rotationOffset { get; set; } = Quaternion.identity;
 
         private void Awake()
         {
@@ -47,10 +47,10 @@ namespace Framework.Runtime.Player
 
         private float CalculateFov()
         {
-            var angle = Mathf.Lerp(settings.fieldOfView, FovOverride, FovOverrideBlend) * 0.5f * Mathf.Deg2Rad;
+            var angle = Mathf.Lerp(settings.fieldOfView, fovOverride, fovOverrideBlend) * 0.5f * Mathf.Deg2Rad;
             var tangent = Mathf.Tan(angle);
 
-            var zoom = FunctionalZoom * Mathf.Lerp(1.0f, EffectZoom, settings.fovEffects);
+            var zoom = functionalZoom * Mathf.Lerp(1.0f, effectZoom, settings.fovEffects);
             angle = Mathf.Atan(tangent / zoom);
 
             return angle * 2.0f * Mathf.Rad2Deg;
@@ -58,8 +58,8 @@ namespace Framework.Runtime.Player
 
         private void FixedUpdate()
         {
-            FunctionalZoom = 1.0f;
-            EffectZoom = 1.0f;
+            functionalZoom = 1.0f;
+            effectZoom = 1.0f;
 
             fovTarget = CalculateFov();
             fovActual += (fovTarget - fovActual) * (1.0f - fovSmoothing);
@@ -69,18 +69,18 @@ namespace Framework.Runtime.Player
 
         private void CalculateZoomEffects()
         {
-            if (Biped.Running) EffectZoom *= settings.runZoom;
+            if (biped.running) effectZoom *= settings.runZoom;
         }
 
         private void UpdateState()
         {
-            var speed = Biped.GroundSpeed;
+            var speed = biped.groundSpeed;
             distance += speed * Time.deltaTime;
         }
 
         private void UpdateCamera(Pose pose, float fov)
         {
-            var view = Biped.view;
+            var view = biped.view;
 
             var position = view.position;
             var rotation = view.rotation;
@@ -88,7 +88,7 @@ namespace Framework.Runtime.Player
             position += rotation * Vector3.Lerp(Vector3.zero, pose.position, weight);
             rotation *= Quaternion.Lerp(Quaternion.identity, pose.rotation, weight);
 
-            rotation *= RotationOffset;
+            rotation *= rotationOffset;
             
             smoothedPosition = Vector3.Lerp(position, smoothedPosition, Time.deltaTime * settings.poseSmoothing);
             smoothedRotation = Quaternion.Slerp(rotation, smoothedRotation, Time.deltaTime * settings.poseSmoothing);
@@ -102,7 +102,7 @@ namespace Framework.Runtime.Player
         private Pose CompilePose()
         {
             var pose = settings.idlePose.CreatePose(distance);
-            if (Biped.IsOnGround) pose = settings.runPose.Apply(pose, distance, Biped.NormalizedGroundSpeed);
+            if (biped.isOnGround) pose = settings.runPose.Apply(pose, distance, biped.normalizedGroundSpeed);
             return pose;
         }
 

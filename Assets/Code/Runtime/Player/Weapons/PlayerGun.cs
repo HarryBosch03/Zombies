@@ -4,19 +4,19 @@ using Framework.Runtime.Data;
 using Framework.Runtime.Utility;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Framework.Runtime.Player.Weapons
 {
     public class PlayerGun : PlayerWeapon
     {
         public int ammo;
-        public UnityEvent ShootUnityEvent;
+        [FormerlySerializedAs("ShootUnityEvent")] public UnityEvent shootUnityEvent;
 
         [HideInInspector]
         public float fieldOfView = 50.0f;
         public Transform modelRoot;
 
-        private PlayerController player;
         private float lastFireTime;
 
         private ParticleSystem flash;
@@ -30,27 +30,25 @@ namespace Framework.Runtime.Player.Weapons
         public event Action EquipEvent;
         public event Action ShootEvent;
 
-        public GunStatSheet StatSheet => (GunStatSheet)statSheet;
-        public override string AmmoLabel => ammo >= 0 ? $"{ammo}/{StatSheet.maxAmmo}" : "--/--";
-        public Vector3? MuzzlePosition => modelRoot && StatSheet ? modelRoot.TransformPoint(StatSheet.muzzleOffset * 0.01f) : null;
-        public Quaternion? MuzzleOrientation => modelRoot && StatSheet ? modelRoot.rotation * Quaternion.LookRotation(StatSheet.muzzleForwardDirection).normalized : null;
-        public Vector3? MuzzleDirection => MuzzleOrientation * Vector3.forward;
-        public float AimPercent { get; private set; }
-        public bool IsReloading { get; private set; }
-        public static bool ToggleAim => Settings.Index<bool>("ToggleAim");
+        public GunStatSheet gunStatSheet => (GunStatSheet)statSheet;
+        public override string ammoLabel => ammo >= 0 ? $"{ammo}/{gunStatSheet.maxAmmo}" : "--/--";
+        public Vector3? muzzlePosition => modelRoot && gunStatSheet ? modelRoot.TransformPoint(gunStatSheet.muzzleOffset * 0.01f) : null;
+        public Quaternion? muzzleOrientation => modelRoot && gunStatSheet ? modelRoot.rotation * Quaternion.LookRotation(gunStatSheet.muzzleForwardDirection).normalized : null;
+        public Vector3? muzzleDirection => muzzleOrientation * Vector3.forward;
+        public float aimPercent { get; private set; }
+        public bool isReloading { get; private set; }
+        public static bool toggleAim => Settings.Index<bool>("ToggleAim");
         
-        public override float ViewportFieldOfView => fieldOfView;
+        public override float viewportFieldOfView => fieldOfView;
 
         protected override void Awake()
         {
-            player = GetComponentInParent<PlayerController>();
-
             base.Awake();
 
             flash = viewport.Find<ParticleSystem>("Flash");
             smoke = viewport.Find<ParticleSystem>("Smoke");
 
-            ammo = StatSheet.maxAmmo;
+            ammo = gunStatSheet.maxAmmo;
         }
 
         public override void OnEquip()
@@ -62,8 +60,8 @@ namespace Framework.Runtime.Player.Weapons
         public override void OnUnequip()
         {
             StopCoroutine(nameof(ReloadRoutine));
-            IsReloading = false;
-            AimPercent = 0.0f;
+            isReloading = false;
+            aimPercent = 0.0f;
             isAiming = false;
         }
 
@@ -71,44 +69,44 @@ namespace Framework.Runtime.Player.Weapons
         {
             base.Update();
 
-            if (player) player.Biped.viewRotation += recoilVelocity * Time.deltaTime;
+            if (player) player.biped.viewRotation += recoilVelocity * Time.deltaTime;
         }
 
         protected override void UpdateEquipped()
         {
-            if (Time.time - equipTime > StatSheet.equipTime)
+            if (Time.time - equipTime > gunStatSheet.equipTime)
             {
-                if (ToggleAim)
+                if (toggleAim)
                 {
-                    if (Player.AimAction.WasPressedThisFrame()) isAiming = !isAiming;
+                    if (player.aimAction.WasPressedThisFrame()) isAiming = !isAiming;
                 }
                 else
                 {
-                    isAiming = Player.AimAction.IsPressed();
+                    isAiming = player.aimAction.IsPressed();
                 }
 
-                if (Player.ReloadAction.WasPressedThisFrame())
+                if (player.reloadAction.WasPressedThisFrame())
                 {
                     StartReload();
                 }
-                else if (IsReloading)
+                else if (isReloading)
                 {
                     isAiming = false;
                 }
                 else
                 {
-                    if (StatSheet.singleFire ? Player.ShootAction.WasPressedThisFrame() : Player.ShootAction.IsPressed())
+                    if (gunStatSheet.singleFire ? player.shootAction.WasPressedThisFrame() : player.shootAction.IsPressed())
                     {
                         Shoot();
                     }
                 }
 
-                AimPercent += (isAiming ? 1 : -1) / StatSheet.aimTime * Time.deltaTime;
-                AimPercent = Mathf.Clamp01(AimPercent);
+                aimPercent += (isAiming ? 1 : -1) / gunStatSheet.aimTime * Time.deltaTime;
+                aimPercent = Mathf.Clamp01(aimPercent);
 
-                Player.Camera.FovOverride = GunStatSheet.AimFov;
-                Player.Camera.FovOverrideBlend = AimPercent;
-                Player.Camera.FunctionalZoom = Mathf.Lerp(1.0f, StatSheet.aimZoom, AimPercent);
+                player.camera.fovOverride = GunStatSheet.AimFov;
+                player.camera.fovOverrideBlend = aimPercent;
+                player.camera.functionalZoom = Mathf.Lerp(1.0f, gunStatSheet.aimZoom, aimPercent);
             }
         }
 
@@ -125,69 +123,69 @@ namespace Framework.Runtime.Player.Weapons
 
         private void Shoot()
         {
-            if (Time.time < lastFireTime + 60.0f / StatSheet.fireRate) return;
+            if (Time.time < lastFireTime + 60.0f / gunStatSheet.fireRate) return;
             if (ammo == 0) return;
 
-            StatSheet.projectile.SpawnFromPrefab(player.gameObject, StatSheet.args, MuzzlePosition.Value, player.Biped.body.velocity, MuzzleDirection.Value);
+            gunStatSheet.projectile.SpawnFromPrefab(player.gameObject, gunStatSheet.args, muzzlePosition.Value, player.biped.body.velocity, muzzleDirection.Value);
             
             if (flash) flash.Play();
             if (smoke && !smoke.isPlaying) smoke.Play();
 
             recoilVelocity += new Vector2
             {
-                x = RandomUtils.MedianVariance(StatSheet.viewRecoilMedian.x, StatSheet.viewRecoilVariance.x),
-                y = RandomUtils.MedianVariance(StatSheet.viewRecoilMedian.y, StatSheet.viewRecoilVariance.y),
+                x = RandomUtils.MedianVariance(gunStatSheet.viewRecoilMedian.x, gunStatSheet.viewRecoilVariance.x),
+                y = RandomUtils.MedianVariance(gunStatSheet.viewRecoilMedian.y, gunStatSheet.viewRecoilVariance.y),
             };
             
             lastFireTime = Time.time;
             ammo--;
 
             ShootEvent?.Invoke();
-            ShootUnityEvent?.Invoke();
+            shootUnityEvent?.Invoke();
         }
 
         private void StartReload()
         {
-            if (ammo >= StatSheet.maxAmmo) return;
-            if (IsReloading) return;
+            if (ammo >= gunStatSheet.maxAmmo) return;
+            if (isReloading) return;
 
             StartCoroutine(nameof(ReloadRoutine));
         }
 
         private IEnumerator ReloadRoutine()
         {
-            IsReloading = true;
+            isReloading = true;
 
-            if (StatSheet.ammoReloadedPerLoop < 1)
+            if (gunStatSheet.ammoReloadedPerLoop < 1)
             {
                 ammo = 0;
-                yield return new WaitForSeconds(StatSheet.reloadLoopDuration);
-                ammo = StatSheet.maxAmmo;
+                yield return new WaitForSeconds(gunStatSheet.reloadLoopDuration);
+                ammo = gunStatSheet.maxAmmo;
             }
             else
             {
-                yield return new WaitForSeconds(StatSheet.preReloadDuration);
-                while (ammo < StatSheet.maxAmmo)
+                yield return new WaitForSeconds(gunStatSheet.preReloadDuration);
+                while (ammo < gunStatSheet.maxAmmo)
                 {
-                    yield return new WaitForSeconds(StatSheet.reloadLoopDuration);
-                    ammo = Mathf.Min(StatSheet.maxAmmo, ammo + StatSheet.ammoReloadedPerLoop);
+                    yield return new WaitForSeconds(gunStatSheet.reloadLoopDuration);
+                    ammo = Mathf.Min(gunStatSheet.maxAmmo, ammo + gunStatSheet.ammoReloadedPerLoop);
                 }
 
-                yield return new WaitForSeconds(StatSheet.postReloadDuration);
+                yield return new WaitForSeconds(gunStatSheet.postReloadDuration);
             }
 
-            IsReloading = false;
+            isReloading = false;
         }
 
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.yellow;
-            if (MuzzlePosition != null && MuzzleDirection != null && MuzzleOrientation != null)
+            if (muzzlePosition != null && muzzleDirection != null && muzzleOrientation != null)
             {
-                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleDirection.Value * 0.08f);
-                Gizmos.DrawRay(MuzzlePosition.Value + MuzzleDirection.Value * 0.08f, MuzzleOrientation.Value * new Vector3(0.0f, 1.0f, -1.0f).normalized * 0.02f);
-                Gizmos.DrawRay(MuzzlePosition.Value + MuzzleDirection.Value * 0.08f, MuzzleOrientation.Value * new Vector3(1.0f, -1.0f, -1.0f).normalized * 0.02f);
-                Gizmos.DrawRay(MuzzlePosition.Value + MuzzleDirection.Value * 0.08f, MuzzleOrientation.Value * new Vector3(-1.0f, -1.0f, -1.0f).normalized * 0.02f);
+                Gizmos.DrawRay(muzzlePosition.Value, muzzleDirection.Value * 0.08f);
+                Gizmos.DrawRay(muzzlePosition.Value + muzzleDirection.Value * 0.08f, muzzleOrientation.Value * new Vector3(0.0f, 1.0f, -1.0f).normalized * 0.02f);
+                Gizmos.DrawRay(muzzlePosition.Value + muzzleDirection.Value * 0.08f, muzzleOrientation.Value * new Vector3(1.0f, -1.0f, -1.0f).normalized * 0.02f);
+                Gizmos.DrawRay(muzzlePosition.Value + muzzleDirection.Value * 0.08f, muzzleOrientation.Value * new Vector3(-1.0f, -1.0f, -1.0f).normalized * 0.02f);
             }
         }
 
@@ -195,15 +193,13 @@ namespace Framework.Runtime.Player.Weapons
         {
             Gizmos.color = Color.yellow;
 
-            if (MuzzlePosition != null && MuzzleOrientation != null && StatSheet)
+            if (muzzlePosition != null && muzzleOrientation != null && gunStatSheet)
             {
-                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(StatSheet.args.spread, 0.0f, 10.0f).normalized);
-                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(-StatSheet.args.spread, 0.0f, 10.0f).normalized);
-                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(0.0f, StatSheet.args.spread, 10.0f).normalized);
-                Gizmos.DrawRay(MuzzlePosition.Value, MuzzleOrientation.Value * new Vector3(0.0f, -StatSheet.args.spread, 10.0f).normalized);
+                Gizmos.DrawRay(muzzlePosition.Value, muzzleOrientation.Value * new Vector3(gunStatSheet.args.spread, 0.0f, 10.0f).normalized);
+                Gizmos.DrawRay(muzzlePosition.Value, muzzleOrientation.Value * new Vector3(-gunStatSheet.args.spread, 0.0f, 10.0f).normalized);
+                Gizmos.DrawRay(muzzlePosition.Value, muzzleOrientation.Value * new Vector3(0.0f, gunStatSheet.args.spread, 10.0f).normalized);
+                Gizmos.DrawRay(muzzlePosition.Value, muzzleOrientation.Value * new Vector3(0.0f, -gunStatSheet.args.spread, 10.0f).normalized);
             }
         }
-        
-        
     }
 }

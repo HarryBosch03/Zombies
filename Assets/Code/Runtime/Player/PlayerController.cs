@@ -17,20 +17,20 @@ namespace Framework.Runtime.Player
         private bool jumpFlag;
         private string username;
 
-        public InputAction MoveAction { get; private set; }
-        public InputAction JumpAction { get; private set; }
-        public InputAction ShootAction { get; private set; }
-        public InputAction AimAction { get; private set; }
-        public InputAction ReloadAction { get; private set; }
-        public InputAction InteractAction { get; set; }
+        public InputAction moveAction { get; private set; }
+        public InputAction jumpAction { get; private set; }
+        public InputAction shootAction { get; private set; }
+        public InputAction aimAction { get; private set; }
+        public InputAction reloadAction { get; private set; }
+        public InputAction interactAction { get; set; }
 
-        public PlayerMovement Biped { get; private set; }
-        public PlayerCameraAnimator Camera { get; private set; }
+        public PlayerMovement biped { get; private set; }
+        public new PlayerCameraAnimator camera { get; private set; }
 
-        public Vector2 ViewInput { get; private set; }
-        public Vector3 LookTarget => Biped.Center;
+        public Vector2 viewInput { get; private set; }
+        public Vector3 LookTarget => biped.center;
 
-        public float ViewportFieldOfView
+        public float viewportFieldOfView
         {
             get => viewportRenderObjects[0].settings.cameraSettings.cameraFieldOfView;
             set
@@ -43,15 +43,15 @@ namespace Framework.Runtime.Player
 
         private void Awake()
         {
-            Biped = GetComponent<PlayerMovement>();
-            Camera = GetComponent<PlayerCameraAnimator>();
+            biped = GetComponent<PlayerMovement>();
+            camera = GetComponent<PlayerCameraAnimator>();
 
-            MoveAction = inputAsset.FindAction("Move");
-            JumpAction = inputAsset.FindAction("Jump");
-            ShootAction = inputAsset.FindAction("Shoot");
-            AimAction = inputAsset.FindAction("Aim");
-            ReloadAction = inputAsset.FindAction("Reload");
-            InteractAction = inputAsset.FindAction("Interact");
+            moveAction = inputAsset.FindAction("Move");
+            jumpAction = inputAsset.FindAction("Jump");
+            shootAction = inputAsset.FindAction("Shoot");
+            aimAction = inputAsset.FindAction("Aim");
+            reloadAction = inputAsset.FindAction("Reload");
+            interactAction = inputAsset.FindAction("Interact");
         }
 
         private void OnEnable()
@@ -78,10 +78,10 @@ namespace Framework.Runtime.Player
 
         private void FixedUpdate()
         {
-            var moveInput = MoveAction.ReadValue<Vector2>();
-            Biped.moveInput = transform.TransformDirection(moveInput.x, 0.0f, moveInput.y);
+            var moveInput = moveAction.ReadValue<Vector2>();
+            biped.moveInput = transform.TransformDirection(moveInput.x, 0.0f, moveInput.y);
 
-            Biped.jump = jumpFlag;
+            biped.jump = jumpFlag;
             jumpFlag = false;
         }
 
@@ -89,10 +89,10 @@ namespace Framework.Runtime.Player
         {
             var delta = Vector2.zero;
             delta += Mouse.current.delta.ReadValue() * mouseSensitivity * Mathf.Min(1.0f, Time.timeScale);
-            Biped.viewRotation += delta;
-            ViewInput = delta;
+            biped.viewRotation += delta;
+            viewInput = delta;
 
-            if (JumpAction.WasPressedThisFrame()) jumpFlag = true;
+            if (jumpAction.WasPressedThisFrame()) jumpFlag = true;
         }
 
         public static void EnableInput(bool state)

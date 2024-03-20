@@ -39,7 +39,7 @@ namespace Framework.Runtime.Npc.Enemies.States
         private void SpawnProjectile()
         {
             var direction = (IPersonality.LookTargetOf(agro) - spawnPoint.position).normalized;
-            projectile.SpawnFromPrefab(Target.gameObject, projectileSpawnArgs, spawnPoint.position, Target.Body.velocity, direction);
+            projectile.SpawnFromPrefab(Target.gameObject, projectileSpawnArgs, spawnPoint.position, Target.body.velocity, direction);
         }
 
         public override void FixedUpdate()

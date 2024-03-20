@@ -7,8 +7,6 @@ namespace Framework.Runtime.Core
     [DisallowMultipleComponent]
     public class PlayerMovement : MonoBehaviour
     {
-        public bool isOwner;
-
         #region Properties
 
         public float moveSpeed = 12.0f;
@@ -32,19 +30,19 @@ namespace Framework.Runtime.Core
         [HideInInspector] public Vector3 moveInput;
         [HideInInspector] public bool jump;
 
-        [HideInInspector] public Transform view;
-        [HideInInspector] public Vector2 viewRotation;
-        [HideInInspector] public Vector2 viewFrameOffset;
-        [HideInInspector] public Rigidbody body;
+        public Transform view {get; set;}
+        public Vector2 viewRotation {get; set;}
+        public Vector2 viewFrameOffset {get; set;}
+        public Rigidbody body {get; set;}
 
         private float height;
         private RaycastHit groundHit;
         private Vector3 lastPosition;
 
-        public bool IsOnGround { get; private set; }
-        public bool Running { get; set; }
+        public bool isOnGround { get; private set; }
+        public bool running { get; set; }
 
-        public float Movement
+        public float movement
         {
             get
             {
@@ -53,11 +51,11 @@ namespace Framework.Runtime.Core
             }
         }
 
-        private Vector3 Gravity => Physics.gravity * (body.velocity.y > 0.0f ? upGravity : downGravity);
-        public Vector3 Center => view.position;
-        public Vector3 Velocity => body.velocity;
-        public float GroundSpeed => new Vector2(Velocity.x, Velocity.z).magnitude;
-        public float NormalizedGroundSpeed => GroundSpeed / moveSpeed;
+        private Vector3 gravity => Physics.gravity * (body.velocity.y > 0.0f ? upGravity : downGravity);
+        public Vector3 center => view.position;
+        public Vector3 velocity => body.velocity;
+        public float groundSpeed => new Vector2(velocity.x, velocity.z).magnitude;
+        public float normalizedGroundSpeed => groundSpeed / moveSpeed;
 
         private void Awake()
         {
@@ -66,7 +64,7 @@ namespace Framework.Runtime.Core
             body.interpolation = RigidbodyInterpolation.None;
             body.constraints = RigidbodyConstraints.FreezeRotation;
 
-            view = transform.Find("View");
+            view = transform.Get("View");
 
             body.constraints = RigidbodyConstraints.FreezeRotation;
         }
@@ -84,12 +82,12 @@ namespace Framework.Runtime.Core
         private void ApplyGravity()
         {
             if (!body.useGravity) return;
-            body.AddForce(Gravity - Physics.gravity, ForceMode.Acceleration);
+            body.AddForce(gravity - Physics.gravity, ForceMode.Acceleration);
         }
 
         private void Jump()
         {
-            if (!IsOnGround) return;
+            if (!isOnGround) return;
             if (!jump) return;
 
             var force = Mathf.Sqrt(2.0f * -Physics.gravity.y * upGravity * jumpHeight);
@@ -98,15 +96,15 @@ namespace Framework.Runtime.Core
 
         private void LookForGround()
         {
-            var wasOnGround = IsOnGround;
+            var wasOnGround = isOnGround;
             var ray = new Ray(body.position + Vector3.up, Vector3.down);
             var castDistance = wasOnGround ? 1.0f + stepHeight : 1.0f;
-            IsOnGround = Physics.Raycast(ray, out groundHit, castDistance) && body.velocity.y < float.Epsilon;
+            isOnGround = Physics.Raycast(ray, out groundHit, castDistance) && body.velocity.y < float.Epsilon;
 
-            if (!IsOnGround) height = body.position.y;
+            if (!isOnGround) height = body.position.y;
             else height = Mathf.Lerp(height, groundHit.point.y, heightSmoothing);
 
-            if (!IsOnGround) return;
+            if (!isOnGround) return;
 
             body.position = new Vector3(body.position.x, height, body.position.z);
             body.velocity = new Vector3(body.velocity.x, Mathf.Max(body.velocity.y, 0.0f), body.velocity.z);
@@ -119,7 +117,7 @@ namespace Framework.Runtime.Core
             var target = Vector3.ClampMagnitude(moveInput, 1.0f) * moveSpeed;
 
             var acceleration = 2.0f / accelerationTime;
-            if (!IsOnGround) acceleration *= 1.0f - airborneAccelerationPenalty;
+            if (!isOnGround) acceleration *= 1.0f - airborneAccelerationPenalty;
             var force = (target - body.velocity) * acceleration;
             force.y = 0.0f;
 
@@ -128,15 +126,18 @@ namespace Framework.Runtime.Core
 
         private void Update()
         {
-            viewRotation.x %= 360.0f;
-            viewRotation.y = Mathf.Clamp(viewRotation.y, -90.0f, 90.0f);
-
+            viewRotation = new Vector2
+            {
+                x = viewRotation.x % 360.0f,
+                y = Mathf.Clamp(viewRotation.y, -90f, 90f)
+            };
+            
             var final = viewRotation + viewFrameOffset;
             viewFrameOffset = Vector2.zero;
 
             body.rotation = Quaternion.Euler(0.0f, final.x, 0.0f);
 
-            view.position = Vector3.Lerp(lastPosition, transform.position, (Time.time - Time.fixedTime) / Time.fixedDeltaTime) + Vector3.up * 1.8f;
+            view.position = Vector3.Lerp(lastPosition, transform.position, (Time.time - Time.fixedTime) / Time.fixedDeltaTime) + Vector3.up * 1.6f;
             view.rotation = Quaternion.Euler(-final.y, final.x, 0.0f);
         }
     }

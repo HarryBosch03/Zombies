@@ -39,7 +39,7 @@ namespace Framework.Runtime.Player
         private void FixedUpdate()
         {
             lastInput = input;
-            input = player.InteractAction.IsPressed();
+            input = player.interactAction.IsPressed();
 
             if (!currentInteractable)
             {

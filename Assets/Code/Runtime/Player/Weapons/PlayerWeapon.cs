@@ -6,7 +6,7 @@ namespace Framework.Runtime.Player.Weapons
 {
     public abstract class PlayerWeapon : MonoBehaviour
     {
-        public WeaponType identifier;
+        public string identifier;
         public WeaponStatSheet statSheet;
         
         [Range(10.0f, 120.0f)]
@@ -20,29 +20,29 @@ namespace Framework.Runtime.Player.Weapons
         protected Transform viewport;
         protected GameObject viewportModel;
         
-        protected Transform world;
-        protected GameObject worldModel;
-
         private static RenderObjects[] viewportRenderObjects;
 
-        public Camera MainCam { get; private set; }
-        public PlayerController Player { get; private set; }
+        public Camera mainCam { get; private set; }
+        public PlayerController player { get; private set; }
 
-        public virtual string DisplayName => name;
-        public abstract string AmmoLabel { get; }
-        public bool Equipped { get; private set; }
+        public virtual string displayName => name;
+        public abstract string ammoLabel { get; }
+        public bool equipped { get; private set; }
 
-        public virtual float ViewportFieldOfView => viewportFov;
+        public virtual float viewportFieldOfView => viewportFov;
 
         protected virtual void Awake()
         {
-            MainCam = Camera.main;
-            Player = GetComponentInParent<PlayerController>();
-
+            mainCam = Camera.main;
+            player = GetComponentInParent<PlayerController>();
+            
             viewport = transform.Find("Viewport");
             viewportModel = viewport.FindGameObject("Model");
 
-            InstanceItemModel();
+            if (!player)
+            {
+                SpawnPickup();
+            }
             
             leftHandHold = transform.DeepFind("Hand.L");
             rightHandHold = transform.DeepFind("Hand.R");
@@ -53,36 +53,6 @@ namespace Framework.Runtime.Player.Weapons
             }
             
             Unequip();
-        }
-
-        private void InstanceItemModel()
-        {
-            world = new GameObject("World").transform;
-            world.SetParent(transform);
-            world.ResetPose();
-
-            worldModel = Instantiate(viewportModel);
-            worldModel.transform.ResetPose();
-            
-            var bounds = new Bounds();
-            foreach (var e in worldModel.GetComponentsInChildren<Renderer>(true))
-            {
-                bounds.Encapsulate(e.bounds);
-            }
-            
-            worldModel.transform.SetParent(world);
-            worldModel.transform.localPosition = -bounds.center;
-
-            if (bounds.size.magnitude > float.Epsilon)
-            {
-                var collider = gameObject.AddComponent<BoxCollider>();
-                collider.size = bounds.size;
-                collider.isTrigger = true;
-            }
-            
-            foreach (var e in worldModel.GetComponentsInChildren<Animator>()) Destroy(e);
-            
-            world.gameObject.SetActive(false);
         }
 
         private WeaponPickup SpawnPickup()
@@ -103,10 +73,10 @@ namespace Framework.Runtime.Player.Weapons
 
         protected virtual void Update()
         {
-            if (Equipped)
+            if (equipped)
             {
                 UpdateEquipped();
-                Player.ViewportFieldOfView = ViewportFieldOfView;
+                player.viewportFieldOfView = viewportFieldOfView;
             }
         }
 
@@ -134,7 +104,17 @@ namespace Framework.Runtime.Player.Weapons
                 viewportModel.gameObject.SetActive(state);
             }
 
-            Equipped = state;
+            equipped = state;
+        }
+
+        protected virtual void OnValidate()
+        {
+            #if UNITY_EDITOR
+            if (UnityEditor.PrefabUtility.IsPartOfPrefabAsset(this))
+            {
+                identifier = name;
+            }
+            #endif
         }
     }
 }

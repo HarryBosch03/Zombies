@@ -32,12 +32,20 @@ namespace Framework.Runtime.Player
             var leftTarget = (Transform)null;
             var rightTarget = (Transform)null;
 
-            var weapon = weaponManager.CurrentWeapon;
-            if (weapon)
+            var weapon = weaponManager.currentWeapon;
+
+            if (!weapon)
             {
-                if (weapon.leftHandHold) leftTarget = weapon.leftHandHold;
-                if (weapon.rightHandHold) rightTarget = weapon.rightHandHold;
+                leftArm.Hide();
+                rightArm.Hide();
+                return;
             }
+            leftArm.Show();
+            rightArm.Show();
+            
+            if (weapon.leftHandHold) leftTarget = weapon.leftHandHold;
+            if (weapon.rightHandHold) rightTarget = weapon.rightHandHold;
+            
             
             if (leftTarget) leftArm.Solve(leftTarget);
             if (rightTarget) rightArm.Solve(rightTarget);
@@ -116,6 +124,16 @@ namespace Framework.Runtime.Player
                 
                 joints[2].position = point2;
                 joints[2].rotation = target ? target.rotation : Quaternion.LookRotation(point2 - point1);
+            }
+
+            public void Show()
+            {
+                transform.gameObject.SetActive(true);
+            }
+
+            public void Hide()
+            {
+                transform.gameObject.SetActive(false);
             }
         }
     }

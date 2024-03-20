@@ -20,6 +20,23 @@ namespace Framework.Runtime.Utility
             return find ? find.GetComponent<T>() : default;
         }
 
+        public static Transform Get(this Transform transform, string path)
+        {
+            var head = transform;
+            foreach (var name in path.Split('/'))
+            {
+                var child = head.Find(name);
+                if (!child)
+                {
+                    child = new GameObject(name).transform;
+                    child.SetParent(head);
+                    child.ResetPose();
+                }
+                head = child;
+            }
+            return head;
+        }
+        
         public static GameObject FindGameObject(this Transform transform, string path)
         {
             var find = transform.Find(path);
@@ -68,6 +85,16 @@ namespace Framework.Runtime.Utility
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
             transform.localScale = Vector3.one;
+        }
+
+        public static T SafeIndex<T>(this T[] array, int index, T fallback = default)
+        {
+            return index >= 0 && index < array.Length ? array[index] : fallback;
+        }
+        
+        public static T SafeIndex<T>(this IReadOnlyList<T> list, int index, T fallback = default)
+        {
+            return index >= 0 && index < list.Count ? list[index] : fallback;
         }
     }
 }
