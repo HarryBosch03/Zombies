@@ -1,18 +1,27 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Random = UnityEngine.Random;
+using Zombies.Runtime.Health;
 
 namespace Zombies.Runtime.Entities
 {
     public class Ragdoll : MonoBehaviour
     {
         public float knockbackForce = 1f;
-        public float forceVariance = 1.2f;
         public Transform root;
-
+        public Rigidbody[] bodies;
+ 
         public static List<Ragdoll> all = new();
-        
+
+        private void Awake()
+        {
+            foreach (var child in GetComponentsInChildren<Transform>())
+            {
+                child.gameObject.layer = 7;
+            }
+            
+            bodies = GetComponentsInChildren<Rigidbody>();
+        }
+
         private void Start()
         {
             all.Add(this);
@@ -24,31 +33,49 @@ namespace Zombies.Runtime.Entities
             }
         }
 
-        public void Spawn(Transform modelRoot, HealthController.DamageArgs args)
+        private void FixedUpdate()
         {
-            var bodies = GetComponentsInChildren<Rigidbody>();
-            var bestBody = (Rigidbody)null;
-            var bestScore = float.MinValue;
-
-            foreach (var body in bodies)
+            var poseList = new Pose[bodies.Length];
+            for (var i = 0; i < bodies.Length; i++)
             {
-                var score = 1f / (body.transform.position - args.point).magnitude;
-                if (score > bestScore)
+                poseList[i].position = bodies[i].transform.position;
+                poseList[i].rotation = bodies[i].transform.rotation;
+            }
+
+            if (bodies.Length > 0)
+            {
+                var center = Vector3.zero;
+                foreach (var body in bodies)
                 {
-                    bestScore = score;
-                    bestBody = body;
+                    center += body.transform.position / bodies.Length;
                 }
+                transform.position = center;
+                transform.rotation = Quaternion.identity;
             }
 
-            if (bestBody != null)
+            for (var i = 0; i < bodies.Length; i++)
             {
-                bestBody.AddForceAtPosition(-args.normal * args.damage * Mathf.Pow(forceVariance, Random.Range(-1f, 1f)) * knockbackForce, args.point, ForceMode.Impulse);
+                bodies[i].transform.position = poseList[i].position;
+                bodies[i].transform.rotation = poseList[i].rotation;
             }
+        }
 
-            var copyFrom = modelRoot.GetComponentsInChildren<Transform>();
-            var copyTo = root.GetComponentsInChildren<Transform>();
+        public void Spawn(Transform modelRoot, HealthController.DamageReport report)
+        {
+            var copyFrom = modelRoot.GetComponentsInChildren<Transform>(true);
+            var copyTo = root.GetComponentsInChildren<Transform>(true);
+            
             for (var i = 0; i < copyFrom.Length; i++)
             {
+                if (report.damage.hitCollider.transform == copyFrom[i].transform)
+                {
+                    var rb = copyTo[i].GetComponent<Rigidbody>();
+                    if (rb != null)
+                    {
+                        rb.AddForceAtPosition(-report.damage.normal * report.finalDamage * knockbackForce, report.damage.point, ForceMode.Impulse);
+                    }
+                }
+                
                 copyTo[i].position = copyFrom[i].position;
                 copyTo[i].rotation = copyFrom[i].rotation;
             }

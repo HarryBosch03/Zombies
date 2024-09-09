@@ -20,6 +20,7 @@ namespace Zombies.Runtime.Enemies.Common
         public bool zombieArms;
         public float zombieAmplitude;
         public float zombieFrequency;
+        public AnimationCurve attackRotationCurve;
         
         private EnemyMovement movement;
         private EnemyAttackinator attack;
@@ -78,9 +79,9 @@ namespace Zombies.Runtime.Enemies.Common
                 
                 if (attackTimer > 0f)
                 {
-                    var t = attackTimer < 0.5f ? attackTimer * 2f : 1f - (attackTimer * 2f - 1f);
-                    leftArm.localRotation = Quaternion.Euler(t * -40f, 0f, 0f) * leftArm.localRotation;
-                    rightArm.localRotation = Quaternion.Euler(t * -40f, 0f, 0f) * rightArm.localRotation;
+                    var p = attackRotationCurve.Evaluate(1f - attackTimer);
+                    leftArm.localRotation = Quaternion.Euler(p * -40f, 0f, 0f) * leftArm.localRotation;
+                    rightArm.localRotation = Quaternion.Euler(p * -40f, 0f, 0f) * rightArm.localRotation;
                     attackTimer -= Time.deltaTime * 2f;
                 }
             }

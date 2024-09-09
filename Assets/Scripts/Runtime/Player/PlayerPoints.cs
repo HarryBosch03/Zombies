@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using Zombies.Runtime.Entities;
 using Zombies.Runtime.GameMeta;
+using Zombies.Runtime.Health;
 
 namespace Zombies.Runtime.Player
 {
@@ -14,9 +15,9 @@ namespace Zombies.Runtime.Player
         
         public int currentPoints;
         public float displayedPoints;
-        public float pointsDisplaySpeed = 1f;
+        public float pointsDisplaySpeedConstant = 1f;
+        public float pointsDisplaySpeedLinear = 1f;
         
-        public float displayedPointsTimer;
         public float feedLifetime;
         public float feedFadeoutTime;
         public int maxLines;
@@ -40,20 +41,21 @@ namespace Zombies.Runtime.Player
         {
             var str = "";
             pointFeed.RemoveAll(e => Time.time - e.constructionTime > feedLifetime);
-            var lines = maxLines > 0 ? Mathf.Min(pointFeed.Count, maxLines) : maxLines;
+            var lines = maxLines > 0 ? Mathf.Min(pointFeed.Count, maxLines) : pointFeed.Count;
             for (var i0 = 0; i0 < lines; i0++)
             {
                 var i1 = reverse ? lines - i0 - 1 : i0;
                 var award = pointFeed[i1];
                 var age = Time.time - award.constructionTime;
                 var size = (i1 == 0 ? 1.5f : 1f) + Mathf.Pow(Mathf.InverseLerp(0.2f, 0f, age), 2f);
+                var alpha = Mathf.RoundToInt(255f * Mathf.InverseLerp(feedLifetime, feedLifetime - feedFadeoutTime, age));
                 
-                str += $"<size={size * 100f:0}%>{award.ToString()}</size>\n";
+                str += $"<size={size * 100f:0}%><alpha=#{alpha:X2}>{award.ToString()}</size>\n";
             }
 
             pointFeedElement.text = str;
 
-            displayedPoints = Mathf.MoveTowards(displayedPoints, currentPoints, Time.deltaTime * pointsDisplaySpeed);
+            displayedPoints = Mathf.MoveTowards(displayedPoints, currentPoints, Time.deltaTime * (pointsDisplaySpeedConstant * 1000f + Mathf.Abs(displayedPoints - currentPoints) * pointsDisplaySpeedLinear));
             pointsValue.text = displayedPoints.ToString("N0");
         }
 
@@ -83,6 +85,12 @@ namespace Zombies.Runtime.Player
         {
             currentPoints += points;
             pointFeed.Insert(0, new PointAward(reason, points));
+        }
+        
+        
+        public void Deduct(int cost)
+        {
+            currentPoints -= cost;
         }
 
         public struct PointAward

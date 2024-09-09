@@ -1,265 +1,141 @@
 using System;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
-using Zombies.Runtime.Entities;
+using Zombies.Runtime.GameMeta;
+using Zombies.Runtime.Utility;
 
 namespace Zombies.Runtime.Player
 {
+    [RequireComponent(typeof(CharacterController))]
     public class PlayerController : MonoBehaviour
     {
-        public float walkSpeed;
-        public float runSpeed;
-        public float accelerationTime;
-        [Range(0f, 1f)]
-        public float airAccelerationPenalty = 0.8f;
-
-        [Space]
-        public float jumpHeight;
-        public float gravityScale = 2f;
-
-        [Space]
         public float mouseSensitivity = 0.3f;
-        public float fieldOfView = 90f;
-        public float runFovModifier;
-        public float fovDamping = 0.1f;
-
-        [Space]
-        public PlayerWeapon activeWeapon;
-        public LayerMask collisionMask;
-
-        [Space]
-        public Transform head;
-        public Vector3 headOffset = new Vector3(0f, 1.7f, 0f);
-        public bool cameraInterpolation = true;
-
-        [Space]
-        public Vector3 velocity;
-        public bool onGround;
-        public RaycastHit groundHit;
-
-        private InputActionMap input;
-        private Vector3 lerpPosition0;
-        private Vector3 lerpPosition1;
+        public float interactDistance = 2f;
+        public TMP_Text lookingAtUI;
+        public Vector2 lookingAtUIOffset;
+        public Shaker lookingAtUIShaker;
 
         private Camera mainCamera;
-        private Vector2 rotation;
-        private Vector2 recoilPosition;
-        private Vector2 recoilVelocity;
-        private float recoilSpring;
-        private float recoilDamping;
-        private bool jump;
-        private MoveState moveState;
-        
-        public static List<PlayerController> all = new();
-        public event Action<PlayerController, bool> ActiveViewerChanged;
-        
-        public bool isActiveViewer { get; private set; }
-        public float overrideFieldOfViewValue { get; set; }
-        public float overrideFieldOfViewBlending { get; set; }
-        public float evaluatedFieldOfView { get; private set; }
-        public HealthController health { get; private set; }
+        private InputActionMap input;
+        private bool interact;
 
-        public void SetActiveViewer(bool isActiveViewer)
-        {
-            this.isActiveViewer = isActiveViewer;
-            ActiveViewerChanged?.Invoke(this, isActiveViewer);
-        }
+        public CharacterController character { get; private set; }
+        public PlayerPoints points { get; private set; }
+        public bool isActiveViewer => activeViewer == this;
+        public bool isControlling { get; set; } = true;
+
+        public static PlayerController activeViewer { get; set; }
+        public static PlayerController localPlayer { get; set; }
 
         private void Awake()
         {
-            input = InputSystem.actions.FindActionMap("Player");
             mainCamera = Camera.main;
 
-            health = GetComponent<HealthController>();
-
-            foreach (var weapon in GetComponentsInChildren<PlayerWeapon>(true))
-            {
-                weapon.gameObject.SetActive(weapon == activeWeapon);
-            }
+            input = InputSystem.actions.FindActionMap("Player");
+            character = GetComponent<CharacterController>();
+            points = GetComponent<PlayerPoints>();
         }
 
-        private void OnEnable()
-        {
-            all.Add(this);
-            Cursor.lockState = CursorLockMode.Locked;
-        }
-
-        private void OnDisable()
-        {
-            all.Remove(this);
-            Cursor.lockState = CursorLockMode.None;
-        }
+        private void OnEnable() { localPlayer = this; }
 
         private void Update()
         {
-            if (input.FindAction("Jump").WasPressedThisFrame()) jump = true;
-
-            ComputeFieldOfView();
-
-            var tanLength = Mathf.Tan(evaluatedFieldOfView * 0.5f * Mathf.Deg2Rad);
-            var mouse = Mouse.current;
-            var lookDelta = Vector2.zero;
-            if (Cursor.lockState == CursorLockMode.Locked) lookDelta += mouse.delta.ReadValue() * mouseSensitivity * tanLength;
-            rotation += lookDelta;
-            rotation.x %= 360f;
-            rotation.y = Mathf.Clamp(rotation.y, -90f, 90f);
-            transform.rotation = Quaternion.Euler(0f, rotation.x, 0f);
-
-            head.transform.position = cameraInterpolation ? Vector3.Lerp(lerpPosition1, lerpPosition0, (Time.time - Time.fixedTime) / Time.fixedDeltaTime) + headOffset : head.transform.position;
-            
-            var headRotation = rotation;
-            headRotation += recoilPosition + recoilVelocity * (Time.time - Time.fixedTime);
-            head.rotation = Quaternion.Euler(-headRotation.y, headRotation.x, 0f);
-
-            if (activeWeapon != null)
+            if (isControlling)
             {
-                if (InputDown("Shoot")) activeWeapon.SetShoot(true);
-                else if (InputUp("Shoot")) activeWeapon.SetShoot(false);
-                if (InputDown("Reload")) activeWeapon.Reload();
-                activeWeapon.isAiming = InputPressed("Aim");
+                var moveInput = input.FindAction("Move").ReadValue<Vector2>();
+                character.moveDirection = transform.TransformDirection(moveInput.x, 0f, moveInput.y);
+
+                if (InputDown("Jump")) character.jump = true;
+                character.run = InputPressed("Run");
+
+                if (InputDown("Primary Weapon")) character.SwitchWeapon(0);
+                if (InputDown("Secondary Weapon")) character.SwitchWeapon(1);
+                character.shoot = InputPressed("Shoot");
+                character.aiming = InputPressed("Aim");
+                if (InputDown("Reload")) character.reload = true;
+
+                if (InputDown("Interact")) interact = true;
+                
+                var m = Mouse.current;
+                Cursor.lockState = CursorLockMode.Locked;
+
+                var tanLength = Mathf.Tan(character.currentFieldOfView * 0.5f * Mathf.Deg2Rad);
+                var lookDelta = Vector2.zero;
+                lookDelta += m.delta.ReadValue() * mouseSensitivity * tanLength;
+                character.rotation += lookDelta;
+            }
+            else
+            {
+                character.moveDirection = Vector3.zero;
+                character.jump = false;
+                character.run = false;
+                character.shoot = false;
+                character.aiming = false;
+                character.reload = false;
+
+                Cursor.lockState = CursorLockMode.None;
             }
 
             var kb = Keyboard.current;
-            if (kb.leftShiftKey.isPressed && kb.rKey.wasPressedThisFrame)
+            if (kb.escapeKey.wasPressedThisFrame)
+            {
+                isControlling = !isControlling;
+            }
+
+            if (kb.leftShiftKey.isPressed && kb.leftCtrlKey.isPressed && kb.rKey.wasPressedThisFrame)
             {
                 SceneManager.LoadScene(SceneManager.GetSceneAt(0).name);
             }
-        }
 
-        private void ComputeFieldOfView()
-        {
-            var targetFieldOfView = Mathf.Lerp(fieldOfView, overrideFieldOfViewValue, overrideFieldOfViewBlending);
-            if (moveState == MoveState.Run) targetFieldOfView += targetFieldOfView * runFovModifier; 
-            
-            evaluatedFieldOfView = Mathf.Lerp(evaluatedFieldOfView, targetFieldOfView, Time.deltaTime / fovDamping);
-        }
-
-        private void LateUpdate()
-        {
-            mainCamera.transform.position = head.position;
-            mainCamera.transform.rotation = head.rotation;
-            mainCamera.fieldOfView = evaluatedFieldOfView;
+            lookingAtUIShaker.Update();
+            lookingAtUI.rectTransform.anchoredPosition = lookingAtUIOffset + lookingAtUIShaker.offset;
         }
 
         private void FixedUpdate()
         {
-            UpdateMoveState();
-            ApplyGravity();
-            CheckForGround();
-            Move();
-            Jump();
-            ApplyRecoil();
+            lookingAtUI.text = "";
 
-            Iterate();
-            Collide();
-            
-            lerpPosition1 = lerpPosition0;
-            lerpPosition0 = transform.position;
-        }
-
-        private void UpdateMoveState()
-        {
-            if (input.FindAction("Move").ReadValue<Vector2>().y > 0.5f && input.FindAction("Run").IsPressed() && !activeWeapon.isAiming) moveState = MoveState.Run;
-            else moveState = MoveState.Walk;
-        }
-
-        private void ApplyRecoil()
-        {
-            var force = -recoilPosition * recoilSpring - recoilVelocity * recoilDamping;
-            
-            recoilPosition += recoilVelocity * Time.deltaTime;
-            recoilVelocity += force * Time.deltaTime;
-        }
-
-        public void AddRecoil(Vector2 dv, float spring, float damping)
-        {
-            recoilSpring = spring;
-            recoilDamping = damping;
-            recoilVelocity += dv;
-        }
-
-        private void Iterate()
-        {
-            transform.position += velocity * Time.deltaTime;
-        }
-
-        private void Collide()
-        {
-            var colliders = GetComponentsInChildren<Collider>();
-            foreach (var collider in colliders)
+            var ray = new Ray(character.head.position, character.head.forward);
+            if (Physics.Raycast(ray, out var hit, interactDistance))
             {
-                var broadPhase = Physics.OverlapBox(collider.bounds.center, collider.bounds.extents, Quaternion.identity, collisionMask);
-                foreach (var other in broadPhase)
+                var purchasable = hit.collider.GetComponentInParent<Purchasable>();
+                if (purchasable != null && purchasable.isActiveAndEnabled)
                 {
-                    if (other.transform.IsChildOf(transform)) continue;
-                    
-                    if (Physics.ComputePenetration(collider, collider.transform.position, collider.transform.rotation, other, other.transform.position, other.transform.rotation, out var normal, out var depth))
+                    lookingAtUI.text = purchasable.display;
+                    if (interact)
                     {
-                        transform.position += normal * depth;
-                        velocity -= normal * Mathf.Min(Vector3.Dot(normal, velocity), 0f);
+                        if (points.currentPoints >= purchasable.cost)
+                        {
+                            purchasable.Purchase();
+                            points.Deduct(purchasable.cost);
+                        }
+                        else
+                        {
+                            lookingAtUIShaker.Shake();
+                        }
                     }
                 }
             }
+
+            interact = false;
         }
 
-        private void ApplyGravity()
+        private void OnValidate()
         {
-            velocity += Physics.gravity * gravityScale * Time.deltaTime;
-        }
-
-        private void CheckForGround()
-        {
-            var castDistance = 1f;
-            var skinWidth = 0.1f;
-            var ray = new Ray(transform.position + Vector3.up * castDistance, Vector3.down);
-            onGround = Physics.Raycast(ray, out groundHit, castDistance + skinWidth, collisionMask);
-            if (onGround)
+            if (!Application.isPlaying)
             {
-                transform.position = new Vector3(transform.position.x, groundHit.point.y, transform.position.z);
-                velocity -= Vector3.up * Mathf.Min(0f, Vector3.Dot(Vector3.up, velocity));
+                if (lookingAtUI != null)
+                {
+                    lookingAtUIOffset = lookingAtUI.rectTransform.anchoredPosition;
+                }
             }
-        }
-
-        private void Move()
-        {
-            var moveSpeed = moveState switch
-            {
-                MoveState.Walk => walkSpeed,
-                MoveState.Run => runSpeed,
-                _ => throw new ArgumentOutOfRangeException()
-            };
-            
-            var input = this.input.FindAction("Move").ReadValue<Vector2>();
-            var target = transform.TransformVector(input.x, 0f, input.y) * moveSpeed;
-            var dv = (target - velocity) * 2f * Time.deltaTime / Mathf.Max(Time.deltaTime, accelerationTime);
-            dv.y = 0f;
-            if (!onGround) dv *= 1f - airAccelerationPenalty;
-
-            velocity += dv;
-        }
-
-        private void Jump()
-        {
-            if (onGround && jump)
-            {
-                velocity = new Vector3(velocity.x, Mathf.Sqrt(2f * Physics.gravity.magnitude * gravityScale * jumpHeight), velocity.z);
-            }
-            
-            jump = false;
         }
 
         private float InputAxis(string name) => input.FindAction(name).ReadValue<float>();
         private bool InputPressed(string name) => input.FindAction(name).IsPressed();
         private bool InputDown(string name) => input.FindAction(name).WasPressedThisFrame();
         private bool InputUp(string name) => input.FindAction(name).WasReleasedThisFrame();
-
-        public enum MoveState
-        {
-            Walk,
-            Run,
-            Crouch
-        }
     }
 }

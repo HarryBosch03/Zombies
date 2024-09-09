@@ -3,12 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Zombies.Runtime.Entities;
+using Zombies.Runtime.Health;
 
 namespace Zombies.Runtime.Enemies.Common
 {
     public class EnemyAttackinator : MonoBehaviour
     {
-        public HealthController.DamageArgs damage;
+        public DamageArgs damage;
 
         public float attackRangeMin;
         public float attackRangeMax;
@@ -34,6 +35,11 @@ namespace Zombies.Runtime.Enemies.Common
             {
                 taskList.Pop();
             }
+        }
+
+        public void Interrupt()
+        {
+            taskList.Clear();
         }
 
         public IEnumerator WaitUntilTargetInRange()

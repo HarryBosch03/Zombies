@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using Zombies.Runtime.Cameras;
-using Zombies.Runtime.Entities;
+using Zombies.Runtime.Health;
 using Random = UnityEngine.Random;
 
 namespace Zombies.Runtime.Player
@@ -11,7 +11,7 @@ namespace Zombies.Runtime.Player
     public class PlayerWeapon : MonoBehaviour
     {
         public Projectile projectile;
-        public HealthController.DamageArgs damage;
+        public DamageArgs damage;
         public Transform physicalSpawnpoint;
         public Transform visualSpawnpoint;
         public float fireRate = 600f;
@@ -29,8 +29,6 @@ namespace Zombies.Runtime.Player
         [Space]
         public Vector2 recoilBase;
         public Vector2 recoilVariance;
-        public float recoilSpring;
-        public float recoilDamping;
 
         [Space]
         public float aimDuration;
@@ -43,14 +41,18 @@ namespace Zombies.Runtime.Player
         public event Action ReloadStartEvent;
         public event Action ReloadEndEvent;
 
-        public PlayerController player { get; private set; }
+        public CharacterController character { get; private set; }
         public float lastShootTime { get; private set; }
         public bool isReloading { get; private set; }
         public float reloadPercent { get; private set; }
         public float aimPercent { get; private set; }
         public bool isAiming { get; set; }
-        
-        private void Awake() { player = GetComponentInParent<PlayerController>(); }
+
+        private void Awake()
+        {
+            character = GetComponentInParent<CharacterController>();
+            currentMagazine = magazineSize;
+        }
 
         private void OnEnable()
         {
@@ -58,6 +60,14 @@ namespace Zombies.Runtime.Player
             {
                 Reload();
             }
+
+            aimPercent = 0f;
+        }
+
+        private void OnDisable()
+        {
+            isReloading = false;
+            reloadPercent = 0f;
         }
 
         private void FixedUpdate()
@@ -69,7 +79,7 @@ namespace Zombies.Runtime.Player
                     if (shootTimer <= 0f)
                     {
                         ShootEvent?.Invoke();
-                        var instance = Projectile.Spawn(projectile, player.gameObject, player.velocity, physicalSpawnpoint, visualSpawnpoint ? visualSpawnpoint : physicalSpawnpoint);
+                        var instance = Projectile.Spawn(projectile, character.gameObject, character.velocity, physicalSpawnpoint, visualSpawnpoint ? visualSpawnpoint : physicalSpawnpoint);
                         instance.damage = damage;
                         shootTimer += 60f / fireRate;
                         lastShootTime = Time.time;
@@ -80,7 +90,7 @@ namespace Zombies.Runtime.Player
                             x = recoilBase.x + Random.Range(-recoilVariance.x, recoilVariance.x),
                             y = recoilBase.y + Random.Range(-recoilVariance.y, recoilVariance.y),
                         };
-                        player.AddRecoil(recoilForce, recoilSpring, recoilDamping);
+                        character.AddRecoil(recoilForce);
                     }
                 }
                 else
@@ -100,8 +110,8 @@ namespace Zombies.Runtime.Player
 
         private void SetFieldOfView()
         {
-            player.overrideFieldOfViewValue = aimFieldOfView;
-            player.overrideFieldOfViewBlending = aimPercent;
+            character.overrideFieldOfViewValue = aimFieldOfView;
+            character.overrideFieldOfViewBlending = aimPercent;
             ViewportCamera.viewportFieldOfView =  Mathf.Lerp(defaultViewportFieldOfView, aimViewportFieldOfView, aimPercent);
             ViewportCamera.referenceFieldOfView = defaultViewportFieldOfView;
             ViewportCamera.centerPlane = aimViewportCenterPlane;

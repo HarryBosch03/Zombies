@@ -1,8 +1,10 @@
 using UnityEngine;
+using Zombies.Runtime.Cameras;
 using Random = UnityEngine.Random;
 
 namespace Zombies.Runtime.Player
 {
+    [DefaultExecutionOrder(50)]
     [RequireComponent(typeof(PlayerWeapon))]
     public class PlayerWeaponAnimator : MonoBehaviour
     {
@@ -11,32 +13,46 @@ namespace Zombies.Runtime.Player
         public Vector3 baseRotation;
         public Vector3 aimPosition;
         public Vector3 aimRotation;
+        public Transform slide;
+        public Vector3 slideForwardPosition;
+        public Vector3 slideBackPosition;
         public int framerate = 12;
 
         [Space]
-        public Vector3 shootPositionOffset = new Vector3(-0.02f, 0.02f, -0.05f);
-        public Vector3 shootRotationOffset = new Vector3(-15f, 5f, 0f);
+        public Vector3 shootPositionBase = new Vector3(-0.02f, 0.02f, -0.05f);
+        public Vector3 shootPositionRange;
+        public Vector3 shootRotationBase = new Vector3(-15f, 5f, 0f);
+        public Vector3 shootRotationRange;
         public int shootFrameCount = 3;
+        public int shootRotationFrameShift = 1;
         public int shootHoldFrames = 2;
 
         [Space]
         public Vector3 reloadOffset;
-        public int reloadFrameCount;
+        public float reloadTransitionDuration;
 
         private PlayerWeapon weapon;
-        private int xSign;
+        private Vector3 shootPosition;
+        private Quaternion shootRotation;
         private float clock;
+        private float reloadOffsetPercent;
 
         private int shootFrame;
-        private int reloadFrame;
-        private Pose? overridePose;
 
         private void OnValidate()
         {
             if (!Application.isPlaying)
             {
-                basePosition = model.localPosition;
-                baseRotation = model.eulerAngles;
+                if (model != null)
+                {
+                    basePosition = model.localPosition;
+                    baseRotation = model.eulerAngles;
+                }
+
+                if (slide != null)
+                {
+                    slideForwardPosition = slide.localPosition;
+                }
             }
         }
 
@@ -52,92 +68,85 @@ namespace Zombies.Runtime.Player
         private void OnEnable()
         {
             weapon.ShootEvent += OnShoot;
-            weapon.ReloadStartEvent += OnReload;
-            weapon.ReloadEndEvent += OnReload;
+            shootFrame = 0;
+            reloadOffsetPercent = 1f;
+            UpdatePose();
         }
 
-        private void OnDisable()
-        {
-            weapon.ShootEvent -= OnShoot;
-            weapon.ReloadStartEvent -= OnReload;
-            weapon.ReloadEndEvent -= OnReload;
-        }
-
+        private void OnDisable() { weapon.ShootEvent -= OnShoot; }
 
         private void OnShoot()
         {
-            xSign = Random.value > 0.5f ? 1 : -1;
-            shootFrame = shootFrameCount;
-        }
+            var positionA = shootPositionBase - shootPositionRange;
+            var positionB = shootPositionBase + shootPositionRange;
 
-        private void OnReload() { reloadFrame = reloadFrameCount; }
+            var rotationA = Quaternion.Euler(shootRotationBase - shootRotationRange);
+            var rotationB = Quaternion.Euler(shootRotationBase + shootRotationRange);
+
+            var t = Random.value;
+            shootPosition = Vector3.Lerp(positionA, positionB, t);
+            shootRotation = Quaternion.Slerp(rotationA, rotationB, t);
+            shootFrame = shootFrameCount + shootHoldFrames;
+        }
 
         private void LateUpdate()
         {
+            if (!weapon.character.isActiveViewer)
+            {
+                model.gameObject.SetActive(false);
+                return;
+            }
+
+            model.gameObject.SetActive(true);
+
+            if (slide != null)
+            {
+                slide.localPosition = shootFrame >= shootFrameCount + shootHoldFrames - 1 ? slideBackPosition : slideForwardPosition;
+            }
+
             if (clock > 1f / framerate)
             {
-                model.localPosition = basePosition;
-                model.localRotation = Quaternion.Euler(baseRotation);
+                UpdatePose();
 
-                if (shootFrame > -shootHoldFrames)
-                {
-                    var positionOffset = shootPositionOffset;
-                    var rotationOffset = shootRotationOffset;
-
-                    positionOffset.x *= xSign;
-                    rotationOffset.y *= xSign;
-
-                    var t = Mathf.Max(0f, shootFrame / (float)shootFrameCount);
-                    
-                    overridePose = new Pose
-                    {
-                        position = positionOffset * t,
-                        rotation = Quaternion.Euler(rotationOffset * t),
-                    };
-                    
-                    shootFrame--;
-                }
-                else if (reloadFrame > 0 || weapon.isReloading)
-                {
-                    var t = Mathf.Max(0f, reloadFrame / (float)reloadFrameCount);
-
-                    if (weapon.isReloading) t = 1f - t;
-
-                    overridePose = new Pose
-                    {
-                        position = reloadOffset * t,
-                        rotation = Quaternion.identity,
-                    };
-
-                    reloadFrame--;
-                }
-                else
-                {
-                    overridePose = weapon.aimPercent > float.Epsilon ? new Pose
-                    {
-                        position = Vector3.zero,
-                        rotation = Quaternion.identity,
-                    }: null;
-                }
-
+                if (shootFrame > 0) shootFrame--;
                 clock -= 1f / framerate;
             }
-            
-            if (overridePose.HasValue)
+
+            reloadOffsetPercent = Mathf.MoveTowards(reloadOffsetPercent, weapon.isReloading ? 1f : 0f, Time.deltaTime / reloadTransitionDuration);
+
+            clock += Time.deltaTime;
+        }
+
+        private void UpdatePose()
+        {
+            var pose = Pose.identity;
+
+            if (shootFrame > 0)
             {
-                var position = Vector3.Lerp(basePosition, aimPosition, weapon.aimPercent);
-                var rotation = Quaternion.Slerp(Quaternion.Euler(baseRotation), Quaternion.Euler(aimRotation), weapon.aimPercent);
-                
-                model.position = weapon.player.head.TransformPoint(position + overridePose.Value.position);
-                model.rotation = weapon.player.head.rotation * rotation * overridePose.Value.rotation;
+                ViewportCamera.disableOffset = true;
+
+                var tp = Mathf.Max(0f, (shootFrame - shootHoldFrames - Mathf.Min(0, shootRotationFrameShift)) / (float)shootFrameCount);
+                var tr = Mathf.Max(0f, (shootFrame - shootHoldFrames + Mathf.Max(0, shootRotationFrameShift)) / (float)shootFrameCount);
+
+                pose = new Pose
+                {
+                    position = shootPosition * tp,
+                    rotation = Quaternion.Slerp(Quaternion.identity, shootRotation, tr),
+                };
             }
             else
             {
-                model.localPosition = basePosition;
-                model.localRotation = Quaternion.Euler(baseRotation);
+                ViewportCamera.disableOffset = false;
             }
-            
-            clock += Time.deltaTime;
+
+            var position = Vector3.Lerp(basePosition, aimPosition, weapon.aimPercent);
+            var rotation = Quaternion.Slerp(Quaternion.Euler(baseRotation), Quaternion.Euler(aimRotation), weapon.aimPercent);
+
+            model.position = weapon.character.head.TransformPoint(position + pose.position);
+            model.rotation = weapon.character.head.rotation * rotation * pose.rotation;
+
+            if (reloadOffsetPercent > float.Epsilon || weapon.isAiming) ViewportCamera.SetSpriteOffset(1, reloadOffset * reloadOffsetPercent);
+            else ViewportCamera.ClearSpriteOffset(1);
         }
     }
 }

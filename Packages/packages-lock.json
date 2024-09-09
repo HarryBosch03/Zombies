@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.marijnzwemmer.unity-toolbar-extender": {
+      "version": "https://github.com/marijnz/unity-toolbar-extender.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "dbd76ed996483d219c39d240f785b1790aa039ed"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
@@ -88,6 +95,13 @@
     "com.unity.nuget.mono-cecil": {
       "version": "1.11.4",
       "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.nuget.newtonsoft-json": {
+      "version": "3.2.1",
+      "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -201,6 +215,15 @@
       "dependencies": {
         "com.unity.modules.ui": "1.0.0",
         "com.unity.modules.imgui": "1.0.0"
+      }
+    },
+    "com.unity.visualeffectgraph": {
+      "version": "17.0.3",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.shadergraph": "17.0.3",
+        "com.unity.render-pipelines.core": "17.0.3"
       }
     },
     "com.unity.visualscripting": {
