@@ -2,8 +2,10 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.DualShock;
 using UnityEngine.SceneManagement;
 using Zombies.Runtime.GameMeta;
+using Zombies.Runtime.Interactive;
 using Zombies.Runtime.Utility;
 
 namespace Zombies.Runtime.Player
@@ -12,6 +14,7 @@ namespace Zombies.Runtime.Player
     public class PlayerController : MonoBehaviour
     {
         public float mouseSensitivity = 0.3f;
+        public float controllerSensitivity = 0.3f;
         public float interactDistance = 2f;
         public TMP_Text lookingAtUI;
         public Vector2 lookingAtUIOffset;
@@ -42,13 +45,17 @@ namespace Zombies.Runtime.Player
 
         private void Update()
         {
+            var psHapticFeedback = DualShockGamepad.current as DualSenseGamepadHID;
+            
             if (isControlling)
             {
                 var moveInput = input.FindAction("Move").ReadValue<Vector2>();
                 character.moveDirection = transform.TransformDirection(moveInput.x, 0f, moveInput.y);
 
                 if (InputDown("Jump")) character.jump = true;
-                character.run = InputPressed("Run");
+                if (InputDown("Hold Run")) character.run = true;
+                if (InputUp("Hold Run")) character.run = false;
+                if (InputUp("Toggle Run")) character.run = !character.run;
 
                 if (InputDown("Primary Weapon")) character.SwitchWeapon(0);
                 if (InputDown("Secondary Weapon")) character.SwitchWeapon(1);
@@ -59,12 +66,17 @@ namespace Zombies.Runtime.Player
                 if (InputDown("Interact")) interact = true;
                 
                 var m = Mouse.current;
+                var gp = Gamepad.current;
                 Cursor.lockState = CursorLockMode.Locked;
 
-                var tanLength = Mathf.Tan(character.currentFieldOfView * 0.5f * Mathf.Deg2Rad);
+                
+                
                 var lookDelta = Vector2.zero;
-                lookDelta += m.delta.ReadValue() * mouseSensitivity * tanLength;
-                character.rotation += lookDelta;
+                if (m != null) lookDelta += m.delta.ReadValue() * mouseSensitivity;
+                if (gp != null) lookDelta += gp.rightStick.ReadValue() * controllerSensitivity * 500f * Time.deltaTime;
+                
+                var tanLength = Mathf.Tan(character.currentFieldOfView * 0.5f * Mathf.Deg2Rad);
+                character.rotation += lookDelta * tanLength;
             }
             else
             {
@@ -100,16 +112,16 @@ namespace Zombies.Runtime.Player
             var ray = new Ray(character.head.position, character.head.forward);
             if (Physics.Raycast(ray, out var hit, interactDistance))
             {
-                var purchasable = hit.collider.GetComponentInParent<Purchasable>();
-                if (purchasable != null && purchasable.isActiveAndEnabled)
+                var interactive = hit.collider.GetComponentInParent<IInteractive>();
+                if (interactive != null && interactive.isActiveAndEnabled)
                 {
-                    lookingAtUI.text = purchasable.display;
+                    var cost = interactive.GetCost(this);
+                    lookingAtUI.text = cost != 0 ? $"{interactive.GetDisplayText(this)} [{cost}]" : interactive.GetDisplayText(this);
                     if (interact)
                     {
-                        if (points.currentPoints >= purchasable.cost)
+                        if (points.currentPoints >= cost && interactive.Interact(this))
                         {
-                            purchasable.Purchase();
-                            points.Deduct(purchasable.cost);
+                            points.Deduct(cost);
                         }
                         else
                         {

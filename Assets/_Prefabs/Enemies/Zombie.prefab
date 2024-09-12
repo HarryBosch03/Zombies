@@ -100,7 +100,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 1
-  pathUpdateFrequency: 60
+  pathUpdateFrequency: 2
   maintenanceDistance: 1.2
   reservationRadius: 0.3
   head: {fileID: 6915507359470191614}

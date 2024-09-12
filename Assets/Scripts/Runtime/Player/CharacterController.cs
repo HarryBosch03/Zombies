@@ -31,7 +31,7 @@ namespace Zombies.Runtime.Player
         [Space]
         [Header("PHYSICS")]
         public LayerMask collisionMask;
-        
+
         [Space]
         [Header("WEAPONS")]
         public PlayerWeapon activeWeapon;
@@ -55,7 +55,7 @@ namespace Zombies.Runtime.Player
         private MoveState moveState;
         private bool shootLastFrame;
         private float dutchTimer;
-        
+
         public static List<CharacterController> all = new();
         public event Action<CharacterController, bool> ActiveViewerChanged;
 
@@ -66,10 +66,10 @@ namespace Zombies.Runtime.Player
         public bool reload { get; set; }
         public bool aiming { get; set; }
         public Vector2 rotation { get; set; }
-        
+
         public Vector3 velocity { get; set; }
         public bool onGround { get; private set; }
-        
+
         public bool isActiveViewer { get; private set; }
         public float overrideFieldOfViewValue { get; set; }
         public float overrideFieldOfViewBlending { get; set; }
@@ -93,6 +93,15 @@ namespace Zombies.Runtime.Player
             {
                 weapon.gameObject.SetActive(weapon == activeWeapon);
             }
+
+            for (var i = 0; i < equippedWeapons.Length; i++)
+            {
+                if (equippedWeapons[i] != null)
+                {
+                    SwitchWeapon(i);
+                    break;
+                }
+            }
         }
 
         private void OnEnable()
@@ -109,7 +118,7 @@ namespace Zombies.Runtime.Player
         {
             all.Remove(this);
             Cursor.lockState = CursorLockMode.None;
-            
+
             HealthController.OnTakeDamage -= TakeDamageEvent;
         }
 
@@ -130,7 +139,7 @@ namespace Zombies.Runtime.Player
                 x = rotation.x % 360f,
                 y = Mathf.Clamp(rotation.y, -90f, 90f),
             };
-            
+
             transform.rotation = Quaternion.Euler(0f, rotation.x, 0f);
             head.transform.position = cameraInterpolation ? Vector3.Lerp(lerpPosition1, lerpPosition0, (Time.time - Time.fixedTime) / Time.fixedDeltaTime) + headOffset : head.transform.position;
 
@@ -158,8 +167,8 @@ namespace Zombies.Runtime.Player
         private void ComputeFieldOfView()
         {
             var targetFieldOfView = Mathf.Lerp(baseFieldOfView, overrideFieldOfViewValue, overrideFieldOfViewBlending);
-            if (moveState == MoveState.Run) targetFieldOfView += targetFieldOfView * runFovModifier; 
-            
+            if (moveState == MoveState.Run) targetFieldOfView += targetFieldOfView * runFovModifier;
+
             currentFieldOfView = Mathf.Lerp(currentFieldOfView, targetFieldOfView, Time.deltaTime / fovDamping);
         }
 
@@ -175,8 +184,8 @@ namespace Zombies.Runtime.Player
 
         private void FixedUpdate()
         {
-            moveDirection = Vector3.ClampMagnitude(new Vector3(moveDirection.x,0f, moveDirection.z), 1f);
-            
+            moveDirection = Vector3.ClampMagnitude(new Vector3(moveDirection.x, 0f, moveDirection.z), 1f);
+
             UpdateMoveState();
             ApplyGravity();
             CheckForGround();
@@ -186,14 +195,14 @@ namespace Zombies.Runtime.Player
 
             Iterate();
             Collide();
-            
+
             lerpPosition1 = lerpPosition0;
             lerpPosition0 = transform.position;
         }
 
         private void UpdateMoveState()
         {
-            if (Vector3.Dot(moveDirection, transform.forward) > 0.5f && run && !activeWeapon.isAiming) moveState = MoveState.Run;
+            if (Vector3.Dot(moveDirection, transform.forward) > 0.5f && run && (activeWeapon == null || !activeWeapon.isAiming)) moveState = MoveState.Run;
             else moveState = MoveState.Walk;
         }
 
@@ -203,26 +212,22 @@ namespace Zombies.Runtime.Player
             rotation += recoilVelocity * Time.deltaTime;
         }
 
-        public void AddRecoil(Vector2 dv)
-        {
-            recoilVelocity += dv * recoilDecay / 20f;
-        }
+        public void AddRecoil(Vector2 dv) { recoilVelocity += dv * recoilDecay / 20f; }
 
-        private void Iterate()
-        {
-            transform.position += velocity * Time.deltaTime;
-        }
+        private void Iterate() { transform.position += velocity * Time.deltaTime; }
 
         private void Collide()
         {
             var colliders = GetComponentsInChildren<Collider>();
             foreach (var collider in colliders)
             {
+                if (collider.isTrigger) continue;
+
                 var broadPhase = Physics.OverlapBox(collider.bounds.center, collider.bounds.extents, Quaternion.identity, collisionMask);
                 foreach (var other in broadPhase)
                 {
-                    if (other.transform.IsChildOf(transform)) continue;
-                    
+                    if (other.isTrigger || other.transform.IsChildOf(transform)) continue;
+
                     if (Physics.ComputePenetration(collider, collider.transform.position, collider.transform.rotation, other, other.transform.position, other.transform.rotation, out var normal, out var depth))
                     {
                         transform.position += normal * depth;
@@ -232,10 +237,7 @@ namespace Zombies.Runtime.Player
             }
         }
 
-        private void ApplyGravity()
-        {
-            velocity += Physics.gravity * gravityScale * Time.deltaTime;
-        }
+        private void ApplyGravity() { velocity += Physics.gravity * gravityScale * Time.deltaTime; }
 
         private void CheckForGround()
         {
@@ -258,7 +260,7 @@ namespace Zombies.Runtime.Player
                 MoveState.Run => runSpeed,
                 _ => throw new ArgumentOutOfRangeException()
             };
-            
+
             var target = moveDirection * moveSpeed;
             var dv = (target - velocity) * 2f * Time.deltaTime / Mathf.Max(Time.deltaTime, accelerationTime);
             dv.y = 0f;
@@ -273,7 +275,7 @@ namespace Zombies.Runtime.Player
             {
                 velocity = new Vector3(velocity.x, Mathf.Sqrt(2f * Physics.gravity.magnitude * gravityScale * jumpHeight), velocity.z);
             }
-            
+
             jump = false;
         }
 
@@ -281,19 +283,29 @@ namespace Zombies.Runtime.Player
         {
             if (equippedWeapons[index] == null) return;
             if (activeWeapon == equippedWeapons[index]) return;
-            
+
             if (activeWeapon) activeWeapon.gameObject.SetActive(false);
             activeWeapon = equippedWeapons[index];
             if (activeWeapon) activeWeapon.gameObject.SetActive(true);
         }
-        
+
+        public PlayerWeapon GetEquippedWeapon(string name)
+        {
+            foreach (var weapon in equippedWeapons)
+            {
+                if (weapon != null && SimplifyWeaponName(weapon.name) == SimplifyWeaponName(name)) return weapon;
+            }
+
+            return null;
+        }
+
         public void EquipWeapon(string name)
         {
             var index = getIndex();
-            
+
             foreach (var weapon in allWeapons)
             {
-                if (weapon.name.Trim().ToLower() == name.Trim().ToLower())
+                if (weapon != null && SimplifyWeaponName(weapon.name) == SimplifyWeaponName(name))
                 {
                     equippedWeapons[index] = weapon;
                     SwitchWeapon(index);
@@ -306,7 +318,7 @@ namespace Zombies.Runtime.Player
                 {
                     if (equippedWeapons[i] == null) return i;
                 }
-                
+
                 for (var i = 0; i < equippedWeapons.Length; i++)
                 {
                     if (equippedWeapons[i] == activeWeapon) return i;
@@ -315,6 +327,8 @@ namespace Zombies.Runtime.Player
                 return 0;
             }
         }
+
+        private static string SimplifyWeaponName(string name) => name?.Trim().ToLower() ?? string.Empty;
 
         private void OnGUI()
         {

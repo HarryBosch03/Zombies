@@ -118,9 +118,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4975387117508894293}
   - component: {fileID: 475409517675426173}
-  - component: {fileID: 6578566471013277907}
   - component: {fileID: 405418232055850411}
-  - component: {fileID: 7958883763833703352}
+  - component: {fileID: 4081533591258057175}
   m_Layer: 8
   m_Name: Single Door
   m_TagString: Untagged
@@ -136,7 +135,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1125577121807672461}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -167,21 +166,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &6578566471013277907
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1125577121807672461}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 128ddfa9c76941db80abbd58fba506ad, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  purchaseAction: Open Door
-  cost: 1000
-  disableOnPurchase: 1
 --- !u!114 &405418232055850411
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -194,10 +178,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc7b624a748b4f3bba991ab560bafbc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cost: 1000
   animator: {fileID: 475409517675426173}
   doorCollider: {fileID: 4927420570285825798}
-  navMeshDoorBlocker: {fileID: 7958883763833703352}
---- !u!208 &7958883763833703352
+  navMeshDoorBlocker: {fileID: 4081533591258057175}
+--- !u!208 &4081533591258057175
 NavMeshObstacle:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -207,7 +192,7 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 1, y: 1.25, z: 0.125}
+  m_Extents: {x: 1, y: 1.25, z: 0.5}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 1

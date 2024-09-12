@@ -20,11 +20,15 @@ namespace Zombies.Runtime.Player
         [Space]
         public int currentMagazine;
         public int magazineSize;
+        public int reserveCurrent;
+        public int reserveMax;
+        public int reserveMagazineCount = 8;
         public float reloadTime;
         public float aimFieldOfView = 70f;
         public float defaultViewportFieldOfView = 50f;
         public float aimViewportFieldOfView = 10f;
         public float aimViewportCenterPlane;
+        public float equipDelay = 0.4f;
 
         [Space]
         public Vector2 recoilBase;
@@ -37,9 +41,9 @@ namespace Zombies.Runtime.Player
         private float shootTimer;
         private bool shoot;
 
-        public event Action ShootEvent;
-        public event Action ReloadStartEvent;
-        public event Action ReloadEndEvent;
+        public static event Action<PlayerWeapon> ShootEvent;
+        public static event Action<PlayerWeapon> ReloadStartEvent;
+        public static event Action<PlayerWeapon> ReloadEndEvent;
 
         public CharacterController character { get; private set; }
         public float lastShootTime { get; private set; }
@@ -52,6 +56,7 @@ namespace Zombies.Runtime.Player
         {
             character = GetComponentInParent<CharacterController>();
             currentMagazine = magazineSize;
+            reserveCurrent = reserveMax;
         }
 
         private void OnEnable()
@@ -62,6 +67,7 @@ namespace Zombies.Runtime.Player
             }
 
             aimPercent = 0f;
+            shootTimer = equipDelay;
         }
 
         private void OnDisable()
@@ -78,7 +84,7 @@ namespace Zombies.Runtime.Player
                 {
                     if (shootTimer <= 0f)
                     {
-                        ShootEvent?.Invoke();
+                        ShootEvent?.Invoke(this);
                         var instance = Projectile.Spawn(projectile, character.gameObject, character.velocity, physicalSpawnpoint, visualSpawnpoint ? visualSpawnpoint : physicalSpawnpoint);
                         instance.damage = damage;
                         shootTimer += 60f / fireRate;
@@ -127,13 +133,14 @@ namespace Zombies.Runtime.Player
 
         private IEnumerator ReloadRoutine()
         {
-            if (isReloading || currentMagazine >= magazineSize) yield break;
+            if (isReloading || currentMagazine >= magazineSize || reserveCurrent <= 0) yield break;
 
             isReloading = true;
+            reserveCurrent += currentMagazine;
             currentMagazine = 0;
             
             reloadPercent = 0f;
-            ReloadStartEvent?.Invoke();
+            ReloadStartEvent?.Invoke(this);
             
             while (reloadPercent < 1f)
             {
@@ -142,10 +149,12 @@ namespace Zombies.Runtime.Player
             }
 
             reloadPercent = 0f;
-            currentMagazine = magazineSize;
+            var deltaAmmo = Mathf.Min(reserveCurrent, magazineSize);
+            currentMagazine = deltaAmmo;
+            reserveCurrent -= deltaAmmo;
             isReloading = false;
             
-            ReloadEndEvent?.Invoke();
+            ReloadEndEvent?.Invoke(this);
         }
 
         private void OnDrawGizmos()
@@ -169,6 +178,14 @@ namespace Zombies.Runtime.Player
             Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = new Color(1f, 0f, 0f, 0.2f);
             Gizmos.DrawCube(Vector3.forward * aimViewportCenterPlane, new Vector3(1f, 1f, 0f));
+        }
+
+        private void OnValidate()
+        {
+            if (!Application.isPlaying)
+            {
+                reserveMax = magazineSize * reserveMagazineCount;
+            }
         }
     }
 }

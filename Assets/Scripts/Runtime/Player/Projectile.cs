@@ -1,6 +1,4 @@
-using System;
 using UnityEngine;
-using Zombies.Runtime.Entities;
 using Zombies.Runtime.Health;
 
 namespace Zombies.Runtime.Player
@@ -13,6 +11,7 @@ namespace Zombies.Runtime.Player
         public int spawnpointInterpolationFrames = 2;
         public ParticleSystem impactFx;
         public Transform visuals;
+        public LayerMask collisionMask = ~0b0;
 
         private GameObject shooter;
         private Vector3 velocity;
@@ -61,7 +60,7 @@ namespace Zombies.Runtime.Player
         private void FixedUpdate()
         {
             var ray = new Ray(transform.position, velocity);
-            if (Physics.Raycast(ray, out var hit, velocity.magnitude * Time.deltaTime * 1.02f))
+            if (Physics.Raycast(ray, out var hit, velocity.magnitude * Time.deltaTime * 1.02f, collisionMask, QueryTriggerInteraction.Ignore))
             {
                 if (age > 0 || !hit.collider.transform.IsChildOf(shooter.transform))
                 {

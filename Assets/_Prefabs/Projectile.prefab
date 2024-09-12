@@ -5035,3 +5035,6 @@ MonoBehaviour:
   spawnpointInterpolationFrames: 3
   impactFx: {fileID: 5870744516620635343}
   visuals: {fileID: 2341984362530231328}
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 881

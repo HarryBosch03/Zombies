@@ -28,8 +28,8 @@ namespace Zombies.Runtime.Player
         public int shootHoldFrames = 2;
 
         [Space]
-        public Vector3 reloadOffset;
-        public float reloadTransitionDuration;
+        public Vector3 reloadOffset = Vector3.down * 0.05f;
+        public float reloadTransitionDuration = 0.35f;
 
         private PlayerWeapon weapon;
         private Vector3 shootPosition;
@@ -67,16 +67,18 @@ namespace Zombies.Runtime.Player
 
         private void OnEnable()
         {
-            weapon.ShootEvent += OnShoot;
+            PlayerWeapon.ShootEvent += OnShoot;
             shootFrame = 0;
             reloadOffsetPercent = 1f;
             UpdatePose();
         }
 
-        private void OnDisable() { weapon.ShootEvent -= OnShoot; }
+        private void OnDisable() { PlayerWeapon.ShootEvent -= OnShoot; }
 
-        private void OnShoot()
+        private void OnShoot(PlayerWeapon weapon)
         {
+            if (weapon != this.weapon) return;
+            
             var positionA = shootPositionBase - shootPositionRange;
             var positionB = shootPositionBase + shootPositionRange;
 
@@ -112,7 +114,7 @@ namespace Zombies.Runtime.Player
                 clock -= 1f / framerate;
             }
 
-            reloadOffsetPercent = Mathf.MoveTowards(reloadOffsetPercent, weapon.isReloading ? 1f : 0f, Time.deltaTime / reloadTransitionDuration);
+            reloadOffsetPercent = Mathf.MoveTowards(reloadOffsetPercent, shootFrame <= 0 && weapon.isReloading ? 1f : 0f, Time.deltaTime / reloadTransitionDuration);
 
             clock += Time.deltaTime;
         }

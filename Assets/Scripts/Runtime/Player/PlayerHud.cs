@@ -98,14 +98,14 @@ namespace Zombies.Runtime.Player
 
             var isReloading = false;
             var currentAmmo = 0;
-            var maxAmmo = 0;
+            var currentReserve = 0;
             var reloadPercent = 0f;
 
             if (weapon != null)
             {
                 isReloading = weapon.isReloading;
                 currentAmmo = weapon.currentMagazine;
-                maxAmmo = weapon.magazineSize;
+                currentReserve = weapon.reserveCurrent;
                 reloadPercent = weapon.reloadPercent;
             }
 
@@ -113,7 +113,7 @@ namespace Zombies.Runtime.Player
             if (ammoValue)
             {
                 ammoValue.gameObject.SetActive(!isReloading);
-                ammoValue.text = $"{currentAmmo} / {maxAmmo}";
+                ammoValue.text = $"{currentAmmo} / {currentReserve}";
             }
 
             if (reloadProgress)
