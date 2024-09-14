@@ -8,7 +8,6 @@ namespace Zombies.Runtime.Player
 {
     public class PlayerHud : MonoBehaviour
     {
-        public Canvas canvas;
         public CanvasGroup dot;
         public TMP_Text ammoValue;
         public TMP_Text ammoLabel;
@@ -42,13 +41,11 @@ namespace Zombies.Runtime.Player
 
         private void OnEnable()
         {
-            character.ActiveViewerChanged += OnActiveViewerChanged;
             HealthController.OnTakeDamage += TakeDamageEvent;
         }
 
         private void OnDisable()
         {
-            character.ActiveViewerChanged -= OnActiveViewerChanged; 
             HealthController.OnTakeDamage -= TakeDamageEvent;
         }
 
@@ -59,8 +56,6 @@ namespace Zombies.Runtime.Player
             SetColorOverlay(damageOverlayColor, damageFxDuration);
             damageShaker.Shake();
         }
-
-        private void OnActiveViewerChanged(CharacterController character, bool isActiveViewer) { canvas.gameObject.SetActive(isActiveViewer); }
 
         private void Update()
         {
@@ -125,14 +120,14 @@ namespace Zombies.Runtime.Player
 
         private void UpdateHealth()
         {
-            if (healthValue) healthValue.text = $"{character.health.currentHealth}/{character.health.maxHealth}";
+            if (healthValue) healthValue.text = $"{character.health.currentHealth.Value}/{character.health.maxHealth}";
         }
 
         private void UpdateFace()
         {
             if (face)
             {
-                var row = Mathf.FloorToInt(3f * (1f - (float)character.health.currentHealth / character.health.maxHealth));
+                var row = Mathf.FloorToInt(3f * (1f - (float)character.health.currentHealth.Value / character.health.maxHealth));
                 face.anchoredPosition = new Vector2(-Mathf.FloorToInt(faceClock), row) * 125f;
             }
 

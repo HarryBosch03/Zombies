@@ -1,19 +1,23 @@
+using System;
 using System.Collections.Generic;
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using TMPro;
 using UnityEngine;
-using Zombies.Runtime.Entities;
 using Zombies.Runtime.GameMeta;
 using Zombies.Runtime.Health;
 
 namespace Zombies.Runtime.Player
 {
-    public class PlayerPoints : MonoBehaviour
+    public class PlayerPoints : NetworkBehaviour
     {
         public static int nonLethalHit = 10;
         public static int lethalHit = 60;
         public static int lethalHeadshot = 100;
         
-        public int currentPoints;
+        public int startingPoints = 500;
+        public readonly SyncVar<int> currentPoints = new SyncVar<int>();
+        [HideInInspector]
         public float displayedPoints;
         public float pointsDisplaySpeedConstant = 1f;
         public float pointsDisplaySpeedLinear = 1f;
@@ -26,6 +30,12 @@ namespace Zombies.Runtime.Player
         public TMP_Text pointsValue;
         
         private List<PointAward> pointFeed = new List<PointAward>();
+
+        public override void OnStartServer()
+        {
+            currentPoints.Value = startingPoints;
+            displayedPoints = startingPoints;
+        }
 
         private void OnEnable()
         {
@@ -55,7 +65,7 @@ namespace Zombies.Runtime.Player
 
             pointFeedElement.text = str;
 
-            displayedPoints = Mathf.MoveTowards(displayedPoints, currentPoints, Time.deltaTime * (pointsDisplaySpeedConstant * 1000f + Mathf.Abs(displayedPoints - currentPoints) * pointsDisplaySpeedLinear));
+            displayedPoints = Mathf.MoveTowards(displayedPoints, currentPoints.Value, Time.deltaTime * (pointsDisplaySpeedConstant * 1000f + Mathf.Abs(displayedPoints - currentPoints.Value) * pointsDisplaySpeedLinear));
             pointsValue.text = displayedPoints.ToString("N0");
         }
 
@@ -83,14 +93,22 @@ namespace Zombies.Runtime.Player
 
         private void AwardPoints(string reason, int points)
         {
-            currentPoints += points;
+            if (!IsServerStarted) return;
+            currentPoints.Value += points;
+            AwardPointsRpc(reason, points);
+        }
+
+        [ObserversRpc(RunLocally = true)]
+        private void AwardPointsRpc(string reason, int points)
+        {
             pointFeed.Insert(0, new PointAward(reason, points));
         }
-        
-        
-        public void Deduct(int cost)
+
+
+        public void DeductPoints(int cost)
         {
-            currentPoints -= cost;
+            if (!IsServerStarted) return;
+            currentPoints.Value -= cost;
         }
 
         public struct PointAward

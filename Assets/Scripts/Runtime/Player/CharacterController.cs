@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FishNet.Object;
 using UnityEngine;
 using Zombies.Runtime.Health;
 
@@ -52,7 +53,6 @@ namespace Zombies.Runtime.Player
 
         private Camera mainCamera;
         private Vector2 recoilVelocity;
-        private MoveState moveState;
         private bool shootLastFrame;
         private float dutchTimer;
 
@@ -66,6 +66,7 @@ namespace Zombies.Runtime.Player
         public bool reload { get; set; }
         public bool aiming { get; set; }
         public Vector2 rotation { get; set; }
+        public MoveState moveState { get; set; }
 
         public Vector3 velocity { get; set; }
         public bool onGround { get; private set; }
@@ -76,7 +77,7 @@ namespace Zombies.Runtime.Player
         public float currentFieldOfView { get; private set; }
         public HealthController health { get; private set; }
 
-        public void SetActiveViewer(bool isActiveViewer)
+        public void SetIsActiveViewer(bool isActiveViewer)
         {
             this.isActiveViewer = isActiveViewer;
             ActiveViewerChanged?.Invoke(this, isActiveViewer);
@@ -109,8 +110,6 @@ namespace Zombies.Runtime.Player
             all.Add(this);
             Cursor.lockState = CursorLockMode.Locked;
 
-            isActiveViewer = true;
-
             HealthController.OnTakeDamage += TakeDamageEvent;
         }
 
@@ -133,7 +132,7 @@ namespace Zombies.Runtime.Player
         {
             ComputeFieldOfView();
 
-            rotation += recoilVelocity * Time.deltaTime;
+            rotation += recoilVelocity * Time.fixedDeltaTime;
             rotation = new Vector2
             {
                 x = rotation.x % 360f,
@@ -146,7 +145,7 @@ namespace Zombies.Runtime.Player
             var dutch = 0f;
             if (dutchTimer > 0f)
             {
-                dutchTimer -= Time.deltaTime;
+                dutchTimer -= Time.fixedDeltaTime;
                 dutch = dutchCurve.Evaluate(1f - dutchTimer / damageDutchDuration) * damageDutchAngle;
             }
 
@@ -169,7 +168,7 @@ namespace Zombies.Runtime.Player
             var targetFieldOfView = Mathf.Lerp(baseFieldOfView, overrideFieldOfViewValue, overrideFieldOfViewBlending);
             if (moveState == MoveState.Run) targetFieldOfView += targetFieldOfView * runFovModifier;
 
-            currentFieldOfView = Mathf.Lerp(currentFieldOfView, targetFieldOfView, Time.deltaTime / fovDamping);
+            currentFieldOfView = Mathf.Lerp(currentFieldOfView, targetFieldOfView, Time.fixedDeltaTime / fovDamping);
         }
 
         private void LateUpdate()
@@ -182,7 +181,7 @@ namespace Zombies.Runtime.Player
             }
         }
 
-        private void FixedUpdate()
+        public void Simulate()
         {
             moveDirection = Vector3.ClampMagnitude(new Vector3(moveDirection.x, 0f, moveDirection.z), 1f);
 
@@ -208,13 +207,13 @@ namespace Zombies.Runtime.Player
 
         private void ApplyRecoil()
         {
-            recoilVelocity -= recoilVelocity * recoilDecay * Time.deltaTime;
-            rotation += recoilVelocity * Time.deltaTime;
+            recoilVelocity -= recoilVelocity * recoilDecay * Time.fixedDeltaTime;
+            rotation += recoilVelocity * Time.fixedDeltaTime;
         }
 
         public void AddRecoil(Vector2 dv) { recoilVelocity += dv * recoilDecay / 20f; }
 
-        private void Iterate() { transform.position += velocity * Time.deltaTime; }
+        private void Iterate() { transform.position += velocity * Time.fixedDeltaTime; }
 
         private void Collide()
         {
@@ -237,7 +236,7 @@ namespace Zombies.Runtime.Player
             }
         }
 
-        private void ApplyGravity() { velocity += Physics.gravity * gravityScale * Time.deltaTime; }
+        private void ApplyGravity() { velocity += Physics.gravity * gravityScale * Time.fixedDeltaTime; }
 
         private void CheckForGround()
         {
@@ -262,7 +261,7 @@ namespace Zombies.Runtime.Player
             };
 
             var target = moveDirection * moveSpeed;
-            var dv = (target - velocity) * 2f * Time.deltaTime / Mathf.Max(Time.deltaTime, accelerationTime);
+            var dv = (target - velocity) * 2f * Time.fixedDeltaTime / Mathf.Max(Time.fixedDeltaTime, accelerationTime);
             dv.y = 0f;
             if (!onGround) dv *= 1f - airAccelerationPenalty;
 
@@ -278,7 +277,7 @@ namespace Zombies.Runtime.Player
 
             jump = false;
         }
-
+        
         public void SwitchWeapon(int index)
         {
             if (equippedWeapons[index] == null) return;

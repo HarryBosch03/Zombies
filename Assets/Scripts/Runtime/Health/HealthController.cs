@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using UnityEngine;
 using Zombies.Runtime.Entities;
 
 namespace Zombies.Runtime.Health
 {
-    public class HealthController : MonoBehaviour
+    public class HealthController : NetworkBehaviour
     {
         public static float headshotDamageMultiplier = 3f;
 
-        public int currentHealth = 100;
+        public readonly SyncVar<int> currentHealth = new SyncVar<int>();
         public int maxHealth = 100;
 
         [Space]
@@ -33,24 +35,29 @@ namespace Zombies.Runtime.Health
 
         private float passiveRegenTimer;
 
-        private void OnEnable() { currentHealth = maxHealth; }
+        public override void OnStartServer()
+        {
+            currentHealth.Value = maxHealth;
+        }
 
         private void Update()
         {
-            if (canPassiveRegen && currentHealth < maxHealth)
+            if (IsServerStarted && canPassiveRegen && currentHealth.Value < maxHealth)
             {
                 passiveRegenTimer += Time.deltaTime;
                 while (passiveRegenTimer >= 1f / passiveRegenRate)
                 {
-                    currentHealth += passiveRegenAmount;
+                    currentHealth.Value += passiveRegenAmount;
                     passiveRegenTimer -= 1f / passiveRegenRate;
-                    if (currentHealth > maxHealth) currentHealth = maxHealth;
+                    if (currentHealth.Value > maxHealth) currentHealth.Value = maxHealth;
                 }
             }
         }
 
-        public DamageReport TakeDamage(DamageArgs args)
+        public void TakeDamage(DamageArgs args)
         {
+            if (!IsServerStarted) return;
+
             var report = new DamageReport();
             report.damage = args;
             report.wasHeadshot = !args.ignoreLocationalDamage && args.hitCollider != null && headColliders.Contains(args.hitCollider);
@@ -65,35 +72,42 @@ namespace Zombies.Runtime.Health
             var damage = (float)args.damage;
             if (report.wasHeadshot) damage *= headshotDamageMultiplier;
             report.finalDamage = Mathf.FloorToInt(damage);
-            if (!godMode) currentHealth -= report.finalDamage;
+            if (!godMode) currentHealth.Value -= report.finalDamage;
 
-            if (buddhaMode && currentHealth < 1) currentHealth = 1;
+            if (buddhaMode && currentHealth.Value < 1) currentHealth.Value = 1;
 
             passiveRegenTimer = -passiveRegenDelay;
 
-            report.wasLethal = currentHealth <= 0;
+            report.wasLethal = currentHealth.Value <= 0;
 
-            OnTakeDamage?.Invoke(this, report);
+            NotifyTakeDamageRpc(report);
 
-            if (report.wasLethal) return Kill(report);
-            else return report;
+            if (report.wasLethal) SetDead(report);
         }
 
-        private DamageReport Kill(DamageReport report)
+        [ObserversRpc(ExcludeServer = false, RunLocally = true)]
+        private void NotifyTakeDamageRpc(DamageReport report) => OnTakeDamage?.Invoke(this, report);
+
+        private void SetDead(DamageReport report)
         {
+            if (!IsServerStarted) return;
+            
             if (!godMode)
             {
-                gameObject.SetActive(false);
-                if (ragdoll != null)
-                {
-                    var instance = Instantiate(ragdoll, transform.position, transform.rotation);
-                    instance.Spawn(modelRoot, report);
-                }
+                SetDeadRpc(report);
             }
+        }
 
+        [ObserversRpc(RunLocally = true)]
+        private void SetDeadRpc(DamageReport report)
+        {
+            gameObject.SetActive(false);
+            if (ragdoll != null)
+            {
+                var instance = Instantiate(ragdoll, transform.position, transform.rotation);
+                instance.Spawn(modelRoot, report);
+            }
             OnDie?.Invoke(this, report);
-
-            return report;
         }
 
         public struct DamageReport

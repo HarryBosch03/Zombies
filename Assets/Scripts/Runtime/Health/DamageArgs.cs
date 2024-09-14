@@ -15,7 +15,7 @@ namespace Zombies.Runtime.Health
         public Vector3 point;
         [HideInInspector]
         public Vector3 normal;
-        [HideInInspector]
+        [NonSerialized]
         public Collider hitCollider;
 
         public DamageArgs(int damage) : this()
