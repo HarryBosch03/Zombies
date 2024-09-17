@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using FishNet.Object;
 using UnityEngine;
 using UnityEngine.AI;
 
 namespace Zombies.Runtime.Enemies.Common
 {
-    public class EnemyMovement : MonoBehaviour
+    public class EnemyMovement : NetworkBehaviour
     {
         public float moveSpeed;
         public float pathUpdateFrequency = 2f;
@@ -21,13 +22,19 @@ namespace Zombies.Runtime.Enemies.Common
         private Vector3? targetPosition;
         private Vector3? pathedPosition;
         
+        private Vector2 rotation;
+        
         public bool moving { get; private set; }
         public bool onGround { get; private set; }
         public Vector3 velocity { get; private set; }
 
         public static List<EnemyMovement> all = new();
-        
-        private void Awake() { path = new NavMeshPath(); }
+        public static float globalSpeedModifier = 0f;
+
+        private void Awake()
+        {
+            path = new NavMeshPath(); 
+        }
 
         private void OnEnable()
         {
@@ -41,6 +48,8 @@ namespace Zombies.Runtime.Enemies.Common
 
         private void FixedUpdate()
         {
+            if (!IsServerStarted) return;
+            
             pathUpdateTimer += Time.deltaTime;
             if (pathUpdateTimer > 1f / pathUpdateFrequency)
             {
@@ -58,18 +67,16 @@ namespace Zombies.Runtime.Enemies.Common
                 {
                     var position = pathedPosition.Value;
                     if ((position - targetPosition.Value).magnitude < maintenanceDistance) position = (transform.position - position).normalized * maintenanceDistance + position;
-                    
+
+                    var moveSpeed = this.moveSpeed;
+                    moveSpeed += moveSpeed * globalSpeedModifier;
                     velocity = (Vector3.MoveTowards(transform.position, position, moveSpeed * Time.deltaTime) - transform.position) / Time.deltaTime;
                     transform.position += velocity * Time.deltaTime;
 
                     var normal = (targetPosition.Value - head.position + Vector3.up * 1.8f).normalized;
                     var ax = Mathf.Atan2(normal.x, normal.z) * Mathf.Rad2Deg;
                     var ay = Mathf.Asin(normal.y) * Mathf.Rad2Deg;
-                    transform.rotation = Quaternion.Euler(0f, ax, 0f);
-                    if (head != null)
-                    {
-                        head.transform.rotation = Quaternion.Euler(-ay, ax, 0f);
-                    }
+                    rotation = new Vector2(ax, -ay);
                 }
                 
                 transform.position = new Vector3(transform.position.x, hit.point.y, transform.position.z);
@@ -83,6 +90,29 @@ namespace Zombies.Runtime.Enemies.Common
                 transform.position += Physics.gravity * 2f * fallingTime * Time.deltaTime;
                 fallingTime += Time.deltaTime;
             }
+            
+            transform.rotation = Quaternion.Euler(0f, rotation.x, 0f);
+            if (head != null)
+            {
+                head.transform.rotation = Quaternion.Euler(-rotation.y, rotation.x, 0f);
+            }
+
+            SendStateToClients(new NetState
+            {
+                position = transform.position,
+                rotation = rotation,
+                velocity = velocity,
+                fallingTime = fallingTime,
+            });
+        }
+
+        [ObserversRpc(ExcludeServer = true)]
+        private void SendStateToClients(NetState state)
+        {
+            transform.position = state.position;
+            rotation = state.rotation;
+            velocity = state.velocity;
+            fallingTime = state.fallingTime;
         }
 
         private void CollideWithOthers()
@@ -142,6 +172,14 @@ namespace Zombies.Runtime.Enemies.Common
             Gizmos.color = Color.green;
             Gizmos.matrix = Matrix4x4.TRS(transform.position, Quaternion.identity, new Vector3(1f, 0f, 1f));
             Gizmos.DrawWireSphere(Vector3.zero, reservationRadius);
+        }
+
+        public struct NetState
+        {
+            public Vector3 position;
+            public Vector2 rotation;
+            public Vector3 velocity;
+            public float fallingTime;
         }
     }
 }

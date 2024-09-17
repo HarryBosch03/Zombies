@@ -70,7 +70,7 @@ namespace Zombies.Runtime.Player
             PlayerWeapon.ShootEvent += OnShoot;
             shootFrame = 0;
             reloadOffsetPercent = 1f;
-            UpdatePose();
+            if (weapon.character.isActiveViewer) UpdatePose();
         }
 
         private void OnDisable() { PlayerWeapon.ShootEvent -= OnShoot; }
@@ -96,27 +96,28 @@ namespace Zombies.Runtime.Player
             if (!weapon.character.isActiveViewer)
             {
                 model.gameObject.SetActive(false);
-                return;
             }
-
-            model.gameObject.SetActive(true);
-
-            if (slide != null)
+            else
             {
-                slide.localPosition = shootFrame >= shootFrameCount + shootHoldFrames - 1 ? slideBackPosition : slideForwardPosition;
+                model.gameObject.SetActive(true);
+    
+                if (slide != null)
+                {
+                    slide.localPosition = shootFrame >= shootFrameCount + shootHoldFrames - 1 ? slideBackPosition : slideForwardPosition;
+                }
+    
+                if (clock > 1f / framerate)
+                {
+                    UpdatePose();
+    
+                    if (shootFrame > 0) shootFrame--;
+                    clock -= 1f / framerate;
+                }
+    
+                reloadOffsetPercent = Mathf.MoveTowards(reloadOffsetPercent, shootFrame <= 0 && weapon.isReloading ? 1f : 0f, Time.deltaTime / reloadTransitionDuration);
+    
+                clock += Time.deltaTime;
             }
-
-            if (clock > 1f / framerate)
-            {
-                UpdatePose();
-
-                if (shootFrame > 0) shootFrame--;
-                clock -= 1f / framerate;
-            }
-
-            reloadOffsetPercent = Mathf.MoveTowards(reloadOffsetPercent, shootFrame <= 0 && weapon.isReloading ? 1f : 0f, Time.deltaTime / reloadTransitionDuration);
-
-            clock += Time.deltaTime;
         }
 
         private void UpdatePose()

@@ -27,7 +27,6 @@ namespace Zombies.Runtime.Player
         public float fovDamping = 0.1f;
         public Transform head;
         public Vector3 headOffset = new Vector3(0f, 1.7f, 0f);
-        public bool cameraInterpolation = true;
 
         [Space]
         [Header("PHYSICS")]
@@ -48,16 +47,13 @@ namespace Zombies.Runtime.Player
         private RaycastHit groundHit;
         private PlayerWeapon[] allWeapons;
 
-        private Vector3 lerpPosition0;
-        private Vector3 lerpPosition1;
-
         private Camera mainCamera;
         private Vector2 recoilVelocity;
         private bool shootLastFrame;
         private float dutchTimer;
 
         public static List<CharacterController> all = new();
-        public event Action<CharacterController, bool> ActiveViewerChanged;
+        public static event Action<CharacterController, bool> ActiveViewerChanged;
 
         public Vector3 moveDirection { get; set; }
         public bool run { get; set; }
@@ -66,6 +62,7 @@ namespace Zombies.Runtime.Player
         public bool reload { get; set; }
         public bool aiming { get; set; }
         public Vector2 rotation { get; set; }
+        public Vector2 deltaRotation { get; set; }
         public MoveState moveState { get; set; }
 
         public Vector3 velocity { get; set; }
@@ -80,6 +77,13 @@ namespace Zombies.Runtime.Player
         public void SetIsActiveViewer(bool isActiveViewer)
         {
             this.isActiveViewer = isActiveViewer;
+            
+            if (isActiveViewer)
+            {
+                mainCamera.transform.SetParent(head);
+                mainCamera.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            }
+            
             ActiveViewerChanged?.Invoke(this, isActiveViewer);
         }
 
@@ -139,8 +143,15 @@ namespace Zombies.Runtime.Player
                 y = Mathf.Clamp(rotation.y, -90f, 90f),
             };
 
-            transform.rotation = Quaternion.Euler(0f, rotation.x, 0f);
-            head.transform.position = cameraInterpolation ? Vector3.Lerp(lerpPosition1, lerpPosition0, (Time.time - Time.fixedTime) / Time.fixedDeltaTime) + headOffset : head.transform.position;
+            var finalRotation = rotation + deltaRotation;
+            finalRotation = new Vector2
+            {
+                x = finalRotation.x % 360f,
+                y = Mathf.Clamp(finalRotation.y, -90f, 90f),
+            };
+            
+            transform.rotation = Quaternion.Euler(0f, finalRotation.x, 0f);
+            head.localPosition = headOffset;
 
             var dutch = 0f;
             if (dutchTimer > 0f)
@@ -149,7 +160,7 @@ namespace Zombies.Runtime.Player
                 dutch = dutchCurve.Evaluate(1f - dutchTimer / damageDutchDuration) * damageDutchAngle;
             }
 
-            head.rotation = Quaternion.Euler(-rotation.y, rotation.x, 0f) * Quaternion.Euler(0f, 0f, dutch);
+            head.rotation = Quaternion.Euler(-finalRotation.y, finalRotation.x, 0f) * Quaternion.Euler(0f, 0f, dutch);
 
             if (activeWeapon != null)
             {
@@ -175,28 +186,29 @@ namespace Zombies.Runtime.Player
         {
             if (isActiveViewer)
             {
-                mainCamera.transform.position = head.position;
-                mainCamera.transform.rotation = head.rotation;
                 mainCamera.fieldOfView = currentFieldOfView;
             }
         }
 
         public void Simulate()
         {
-            moveDirection = Vector3.ClampMagnitude(new Vector3(moveDirection.x, 0f, moveDirection.z), 1f);
+            if (isActiveAndEnabled)
+            {
+                moveDirection = Vector3.ClampMagnitude(new Vector3(moveDirection.x, 0f, moveDirection.z), 1f);
+                
+                UpdateMoveState();
+                ApplyGravity();
+                CheckForGround();
+                Move();
+                Jump();
+                ApplyRecoil();
+                
+                Iterate();
+                Collide();
+            }
 
-            UpdateMoveState();
-            ApplyGravity();
-            CheckForGround();
-            Move();
-            Jump();
-            ApplyRecoil();
-
-            Iterate();
-            Collide();
-
-            lerpPosition1 = lerpPosition0;
-            lerpPosition0 = transform.position;
+            rotation += deltaRotation;
+            deltaRotation = default;
         }
 
         private void UpdateMoveState()

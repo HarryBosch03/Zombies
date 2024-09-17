@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using FishNet.Object;
 using FishNet.Object.Prediction;
 using FishNet.Transporting;
@@ -7,6 +8,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Zombies.Runtime.Interactive;
 using Zombies.Runtime.Utility;
+using Random = UnityEngine.Random;
 
 namespace Zombies.Runtime.Player
 {
@@ -34,6 +36,7 @@ namespace Zombies.Runtime.Player
         public bool isActiveViewer => activeViewer == this;
         public bool isControlling { get; set; }
 
+        public static readonly List<PlayerController> All = new();
         private static PlayerController activeViewerInternal;
         public static PlayerController activeViewer
         {
@@ -65,6 +68,8 @@ namespace Zombies.Runtime.Player
             input = InputSystem.actions.FindActionMap("Player");
             character = GetComponent<CharacterController>();
             points = GetComponent<PlayerPoints>();
+            
+            UpdateViewerSpecificVisuals(false);
         }
 
         public override void OnStartNetwork()
@@ -78,12 +83,16 @@ namespace Zombies.Runtime.Player
             
             TimeManager.OnTick += OnTick;
             FailedInteractionEvent += OnFailedInteraction;
+
+            All.Add(this);
         }
 
         public override void OnStopNetwork()
         {
             TimeManager.OnTick -= OnTick;
             FailedInteractionEvent -= OnFailedInteraction;
+
+            All.Remove(this);
         }
 
         private void OnFailedInteraction(PlayerController player)
@@ -131,6 +140,7 @@ namespace Zombies.Runtime.Player
                 if (IsOwner) Cursor.lockState = CursorLockMode.None;
             }
 
+            character.deltaRotation = inputData.lookDelta;
             pending = inputData;
 
             var kb = Keyboard.current;
@@ -152,7 +162,7 @@ namespace Zombies.Runtime.Player
         private InputData CreateInputData()
         {
             var data = pending;
-            pending = default;
+            pending.Consume();
             return data;
         }
 
@@ -167,7 +177,7 @@ namespace Zombies.Runtime.Player
             character.aiming = inputData.aiming;
             character.reload = inputData.reload;
             interact = inputData.interact;
-            character.rotation += inputData.lookDelta;
+            character.deltaRotation = inputData.lookDelta;
             
             character.Simulate();
             CheckForInteractables();
@@ -260,6 +270,15 @@ namespace Zombies.Runtime.Player
             public uint GetTick() => tick;
             public void SetTick(uint value) => tick = value;
             public void Dispose() {  }
+
+            public void Consume()
+            {
+                jump = false;
+                switchWeapon = 0;
+                reload = false;
+                interact = false;
+                lookDelta = default;
+            }
         }
 
         public struct ReconcileData : IReconcileData
@@ -274,5 +293,7 @@ namespace Zombies.Runtime.Player
             public void SetTick(uint value) => tick = value;
             public void Dispose() {  }
         }
+
+        public static PlayerController GetRandomPlayer() => All.Count > 0 ? All[Random.Range(0, All.Count - 1)] : null;
     }
 }

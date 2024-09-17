@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Zombies.Runtime.Cameras;
 
@@ -18,6 +19,19 @@ namespace Zombies.Runtime.Player
         private void Awake()
         {
             character = GetComponentInParent<CharacterController>();
+            CharacterController.ActiveViewerChanged += OnActiveViewerChanged;
+            OnActiveViewerChanged(character, character.isActiveViewer);
+        }
+
+        private void OnDestroy()
+        {
+            CharacterController.ActiveViewerChanged -= OnActiveViewerChanged;
+        }
+
+        private void OnActiveViewerChanged(CharacterController character, bool isActiveViewer)
+        {
+            if (character != this.character) return; 
+            enabled = isActiveViewer;
         }
 
         private void FixedUpdate()
