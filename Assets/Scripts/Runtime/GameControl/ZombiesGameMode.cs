@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FishNet;
 using FishNet.Object;
 using UnityEngine;
 using Zombies.Runtime.Enemies.Common;
@@ -10,6 +11,9 @@ namespace Zombies.Runtime.GameControl
 {
     public class ZombiesGameMode : NetworkBehaviour
     {
+        public bool verboseLogging;
+
+        [Space]
         public int currentRound;
         public int zombiesLeft;
         public float speedModifier;
@@ -31,18 +35,25 @@ namespace Zombies.Runtime.GameControl
         private List<GameObject> trackedZombies = new();
         private ZombieSpawner[] activeSpawners = new ZombieSpawner[0];
 
-        private void Awake() { HealthController.OnDie += OnDie; }
+        public override void OnStartNetwork() => enabled = IsServerInitialized;
 
-        private void OnDestroy() { HealthController.OnDie -= OnDie; }
+        private void OnEnable() { HealthController.OnDie += OnDie; }
 
-        private void OnDie(HealthController controller, HealthController.DamageReport report) => trackedZombies.Remove(controller.gameObject);
+        private void OnDisable() { HealthController.OnDie -= OnDie; }
+
+        private void OnDie(HealthController controller, HealthController.DamageReport report)
+        {
+            if (trackedZombies.Remove(controller.gameObject))
+            {
+                VerboseLog($"Successfully removed {gameObject.name} from tracked pool");
+                Despawn(controller.gameObject);
+            }
+        }
 
         private void Update()
         {
             if (clock > 1f / tickRate)
             {
-                if (!IsServerStarted) return;
-
                 if (activeSpawners.Length != maxActiveSpawners) Array.Resize(ref activeSpawners, maxActiveSpawners);
 
                 if (zombiesLeft > 0)
@@ -50,7 +61,7 @@ namespace Zombies.Runtime.GameControl
                     for (var i = 0; i < activeSpawners.Length; i++)
                     {
                         var spawner = activeSpawners[i];
-                        if (spawner == null || !spawner.isSpawning)
+                        if (spawner == null || spawner.canSpawn)
                         {
                             activeSpawners[i] = ProcNewSpawner();
                             break;
@@ -83,7 +94,7 @@ namespace Zombies.Runtime.GameControl
             {
                 var spawner = ZombieSpawner.all[i];
                 var score = 1f / (spawner.transform.position - player.transform.position).sqrMagnitude;
-                if (!spawner.isSpawning && score > bestSpawnerScore)
+                if (spawner.canSpawn && score > bestSpawnerScore)
                 {
                     bestSpawner = spawner;
                     bestSpawnerScore = score;
@@ -94,7 +105,13 @@ namespace Zombies.Runtime.GameControl
             {
                 var zombie = bestSpawner.Spawn();
                 trackedZombies.Add(zombie);
+                if (zombie != null) VerboseLog($"Spawner {bestSpawner.name} Successfully Triggered");
+                else VerboseLog($"Spawner {bestSpawner.name} Failed to Trigger");
                 zombiesLeft--;
+            }
+            else
+            {
+                VerboseLog("Tried to Trigger spawner but none were found");
             }
 
             return bestSpawner;
@@ -105,6 +122,11 @@ namespace Zombies.Runtime.GameControl
             base.OnValidate();
 
             maxActiveSpawners = Mathf.Max(1, maxActiveSpawners);
+        }
+
+        public void VerboseLog(object message)
+        {
+            if (verboseLogging) Debug.Log(message);
         }
     }
 }

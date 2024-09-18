@@ -272,5 +272,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72161386f35e4ae3b22177aa1404cb22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  spawns:
+  - pathToBarrier:
+    - {x: 4.5, y: 0, z: -7}
+    - {x: 0.5, y: 0, z: -4}
+    - {x: 0.5, y: 0, z: -2.5}
+    exitPoint: {x: 0.5, y: 0, z: 0}
+  - pathToBarrier:
+    - {x: -4.5, y: 0, z: -7}
+    - {x: -0.5, y: 0, z: -4}
+    - {x: -0.5, y: 0, z: -2.5}
+    exitPoint: {x: -0.5, y: 0, z: 0}
+  hasBarrier: 1
+  maxBarrierHealth: 0
+  currentBarrierHealth: 0
   prefab: {fileID: 6554991551166210749, guid: 4e02bf4eb7240a741b0a9116d8a691dd, type: 3}
   spawnDelay: 5

@@ -17,8 +17,10 @@ namespace Zombies.Runtime.Enemies.Common
         public float postDelay;
 
         private Stack<IEnumerator> taskList = new();
-
-        public Action OnAttackStart;
+        
+        public event Action OnAttackStart;
+        public event Action<DamageArgs> OnAttackLand;
+        public event Action OnAttackEnd;
 
         public GameObject target { get; set; }
         public bool isAttacking { get; private set; }
@@ -41,6 +43,12 @@ namespace Zombies.Runtime.Enemies.Common
         {
             taskList.Clear();
         }
+        
+        public void ForceAttack(Action<DamageArgs> onAttackLand, Action onAttackEnd)
+        {
+            taskList.Clear();
+            taskList.Push(Attack(null, onAttackLand, onAttackEnd));
+        }
 
         public IEnumerator WaitUntilTargetInRange()
         {
@@ -49,16 +57,26 @@ namespace Zombies.Runtime.Enemies.Common
                 yield return null;
             }
 
-            yield return Attack();
+            yield return Attack(OnAttackStart, LandAttack, OnAttackEnd);
         }
 
-        public IEnumerator Attack()
+        public IEnumerator Attack(Action onAttackStart, Action<DamageArgs> onAttackLand, Action onAttackEnd)
         {
             isAttacking = true;
-            OnAttackStart?.Invoke();
+            onAttackStart?.Invoke();
 
             yield return Wait(preDelay);
 
+            onAttackLand?.Invoke(damage);
+
+            yield return Wait(postDelay);
+            isAttacking = false;
+
+            onAttackEnd?.Invoke();
+        }
+
+        public void LandAttack(DamageArgs args)
+        {
             if ((target.transform.position - transform.position).magnitude < attackRangeMax)
             {
                 var health = target.GetComponent<HealthController>();
@@ -68,9 +86,7 @@ namespace Zombies.Runtime.Enemies.Common
                 }
             }
 
-
-            yield return Wait(postDelay);
-            isAttacking = false;
+            OnAttackLand?.Invoke(damage);
         }
 
         public static IEnumerator Wait(float duration)

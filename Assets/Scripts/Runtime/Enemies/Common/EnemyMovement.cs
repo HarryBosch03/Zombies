@@ -2,12 +2,15 @@ using System.Collections.Generic;
 using FishNet.Object;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Serialization;
 
 namespace Zombies.Runtime.Enemies.Common
 {
     public class EnemyMovement : NetworkBehaviour
     {
-        public float moveSpeed;
+        [SerializeField]
+        [FormerlySerializedAs("moveSpeed")]
+        private float baseMoveSpeed = 2f;
         public float pathUpdateFrequency = 2f;
         public float maintenanceDistance = 1f;
         public float reservationRadius = 1f;
@@ -23,7 +26,8 @@ namespace Zombies.Runtime.Enemies.Common
         private Vector3? pathedPosition;
         
         private Vector2 rotation;
-        
+
+        public float moveSpeed => baseMoveSpeed * globalSpeedModifier;
         public bool moving { get; private set; }
         public bool onGround { get; private set; }
         public Vector3 velocity { get; private set; }
@@ -151,10 +155,16 @@ namespace Zombies.Runtime.Enemies.Common
                 pathedPosition = targetPosition.Value;
             }
         }
-
+        
+        public void ForceMoveTowards(Vector3 point)
+        {
+            targetPosition = point;
+            pathedPosition = point;
+        }
+        
         public void ClearMovement() => targetPosition = null;
 
-        public void MoveTowards(Vector3 position) => targetPosition = position;
+        public void PathTo(Vector3 position) => targetPosition = position;
 
         private void OnDrawGizmos()
         {
