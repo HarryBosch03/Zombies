@@ -23,7 +23,7 @@ namespace Zombies.Editor
                         rect.width /= 4f;
                         
                         var zombieCount = Mathf.RoundToInt(target.enemiesPerRoundConstant + target.enemiesPerRoundLinear * i + target.enemiesPerRoundQuadratic * i * i);
-                        var speedModifier = Mathf.RoundToInt((target.enemySpeedLinear * i + target.enemySpeedInvQuadratic * Mathf.Sqrt(i)) * 100f);
+                        var speedModifier = Mathf.RoundToInt(target.enemySpeedMax * (target.enemySpeedMax / (-target.enemySpeedGradient * i - target.enemySpeedMax) + 1f) * 100f);
 
                         EditorGUI.LabelField(rect, "Zombies");
                         rect.x += rect.width;

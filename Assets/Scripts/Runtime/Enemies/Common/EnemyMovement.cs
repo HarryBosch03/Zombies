@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using FishNet.Object;
 using UnityEngine;
@@ -10,27 +11,30 @@ namespace Zombies.Runtime.Enemies.Common
     {
         [SerializeField]
         [FormerlySerializedAs("moveSpeed")]
-        private float baseMoveSpeed = 2f;
+        private float baseMoveSpeed = 1f;
         public float pathUpdateFrequency = 2f;
-        public float maintenanceDistance = 1f;
         public float reservationRadius = 1f;
+        public float turnSpeed = 180f;
 
         [Space]
         public Transform head;
         public LayerMask collisionMask = ~((0b1 << 6) & (0b1 << 7));
+
+        [Space]
+        public Animator animator;
         
         private float fallingTime;
         private float pathUpdateTimer;
         private NavMeshPath path;
         private Vector3? targetPosition;
         private Vector3? pathedPosition;
-        
+                
+        private Vector2 targetRotation;
         private Vector2 rotation;
 
-        public float moveSpeed => baseMoveSpeed * globalSpeedModifier;
+        public float moveSpeed => baseMoveSpeed + baseMoveSpeed * globalSpeedModifier;
         public bool moving { get; private set; }
         public bool onGround { get; private set; }
-        public Vector3 velocity { get; private set; }
 
         public static List<EnemyMovement> all = new();
         public static float globalSpeedModifier = 0f;
@@ -53,14 +57,24 @@ namespace Zombies.Runtime.Enemies.Common
         private void FixedUpdate()
         {
             if (!IsServerStarted) return;
+
+            if (animator != null)
+            {
+                var state = animator.GetCurrentAnimatorStateInfo(0);
+                if (state.IsTag("Attack") || state.IsTag("Freeze")) return;
+            }
             
             pathUpdateTimer += Time.deltaTime;
-            if (pathUpdateTimer > 1f / pathUpdateFrequency)
+            if (targetPosition.HasValue && (pathUpdateTimer > 1f / pathUpdateFrequency || !pathedPosition.HasValue))
             {
                 pathUpdateTimer -= 1f / pathUpdateFrequency;
                 CalculatePath();
             }
-
+            if (path.corners.Length == 2 && targetPosition.HasValue)
+            {
+                pathedPosition = targetPosition.Value;
+            }
+            
             var ray = new Ray(transform.position + Vector3.up, Vector3.down);
             onGround = Physics.Raycast(ray, out var hit, 1.1f, collisionMask);
 
@@ -69,18 +83,12 @@ namespace Zombies.Runtime.Enemies.Common
                 moving = targetPosition.HasValue && pathedPosition.HasValue;
                 if (moving)
                 {
-                    var position = pathedPosition.Value;
-                    if ((position - targetPosition.Value).magnitude < maintenanceDistance) position = (transform.position - position).normalized * maintenanceDistance + position;
-
-                    var moveSpeed = this.moveSpeed;
-                    moveSpeed += moveSpeed * globalSpeedModifier;
-                    velocity = (Vector3.MoveTowards(transform.position, position, moveSpeed * Time.deltaTime) - transform.position) / Time.deltaTime;
-                    transform.position += velocity * Time.deltaTime;
-
-                    var normal = (targetPosition.Value - head.position + Vector3.up * 1.8f).normalized;
-                    var ax = Mathf.Atan2(normal.x, normal.z) * Mathf.Rad2Deg;
-                    var ay = Mathf.Asin(normal.y) * Mathf.Rad2Deg;
-                    rotation = new Vector2(ax, -ay);
+                    ForceLookAt(pathedPosition.Value);
+                    animator.SetFloat("move speed", moveSpeed);
+                }
+                else
+                {
+                    animator.SetFloat("move speed", 0f);
                 }
                 
                 transform.position = new Vector3(transform.position.x, hit.point.y, transform.position.z);
@@ -95,17 +103,27 @@ namespace Zombies.Runtime.Enemies.Common
                 fallingTime += Time.deltaTime;
             }
             
+            rotation = new Vector2
+            {
+                y = Mathf.MoveTowardsAngle(rotation.y, targetRotation.y, Time.deltaTime * turnSpeed),
+                x = Mathf.MoveTowardsAngle(rotation.x, targetRotation.x, Time.deltaTime * turnSpeed),
+            };
+            
             transform.rotation = Quaternion.Euler(0f, rotation.x, 0f);
             if (head != null)
             {
                 head.transform.rotation = Quaternion.Euler(-rotation.y, rotation.x, 0f);
             }
 
+            if (NavMesh.SamplePosition(transform.position, out var navMeshHit, 1f, ~0))
+            {
+                transform.position = navMeshHit.position;
+            }
+
             SendStateToClients(new NetState
             {
                 position = transform.position,
                 rotation = rotation,
-                velocity = velocity,
                 fallingTime = fallingTime,
             });
         }
@@ -115,7 +133,6 @@ namespace Zombies.Runtime.Enemies.Common
         {
             transform.position = state.position;
             rotation = state.rotation;
-            velocity = state.velocity;
             fallingTime = state.fallingTime;
         }
 
@@ -160,11 +177,22 @@ namespace Zombies.Runtime.Enemies.Common
         {
             targetPosition = point;
             pathedPosition = point;
+            pathUpdateTimer = 0f;
         }
-        
-        public void ClearMovement() => targetPosition = null;
+
+        public void ClearMovement()
+        {
+            targetPosition = null;
+            pathedPosition = null;
+        }
 
         public void PathTo(Vector3 position) => targetPosition = position;
+
+        public void ForceLookAt(Vector3 position)
+        {
+            var normal = (position - (head != null ? head.position + Vector3.up * 1.8f : transform.position)).normalized;
+            targetRotation = new Vector2(Mathf.Atan2(normal.x, normal.z) * Mathf.Rad2Deg, -Mathf.Asin(normal.y) * Mathf.Rad2Deg);
+        }
 
         private void OnDrawGizmos()
         {
@@ -182,13 +210,20 @@ namespace Zombies.Runtime.Enemies.Common
             Gizmos.color = Color.green;
             Gizmos.matrix = Matrix4x4.TRS(transform.position, Quaternion.identity, new Vector3(1f, 0f, 1f));
             Gizmos.DrawWireSphere(Vector3.zero, reservationRadius);
+
+            Gizmos.matrix = Matrix4x4.identity;
+            Gizmos.color = Color.blue;
+            if (pathedPosition.HasValue)
+            {
+                Gizmos.DrawLine(transform.position, pathedPosition.Value);
+                Gizmos.DrawSphere(pathedPosition.Value, 0.04f);
+            }
         }
 
         public struct NetState
         {
             public Vector3 position;
             public Vector2 rotation;
-            public Vector3 velocity;
             public float fallingTime;
         }
     }

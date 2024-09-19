@@ -31,8 +31,10 @@ namespace Zombies.Runtime.Player
         public float equipDelay = 0.4f;
 
         [Space]
-        public Vector2 recoilBase;
-        public Vector2 recoilVariance;
+        public float recoilStrength;
+        [Range(0f, 1f)]
+        public float recoilStrengthRandom = 0.2f;
+        public float recoilAngle = 15f;
 
         [Space]
         public float aimDuration;
@@ -91,10 +93,13 @@ namespace Zombies.Runtime.Player
                         lastShootTime = Time.time;
                         currentMagazine--;
 
+                        var randomAngle = Random.Range(-recoilAngle, recoilAngle) / 2f * Mathf.Deg2Rad;
+                        var randomStrength = Mathf.Lerp(1f, Random.Range(0f, 2f), recoilStrengthRandom);
+                        
                         var recoilForce = new Vector2
                         {
-                            x = recoilBase.x + Random.Range(-recoilVariance.x, recoilVariance.x),
-                            y = recoilBase.y + Random.Range(-recoilVariance.y, recoilVariance.y),
+                            x = Mathf.Sin(randomAngle) * recoilStrength * randomStrength,
+                            y = Mathf.Cos(randomAngle) * recoilStrength * randomStrength,
                         };
                         character.AddRecoil(recoilForce);
                     }
@@ -129,7 +134,10 @@ namespace Zombies.Runtime.Player
             else if (input) shoot = true;
         }
 
-        public void Reload() => StartCoroutine(ReloadRoutine());
+        public void Reload()
+        {
+            if (isActiveAndEnabled) StartCoroutine(ReloadRoutine());
+        }
 
         private IEnumerator ReloadRoutine()
         {

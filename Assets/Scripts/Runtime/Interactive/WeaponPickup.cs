@@ -35,16 +35,16 @@ namespace Zombies.Runtime.Interactive
             transform.rotation = Quaternion.Euler(Vector3.up * Time.time * spinSpeed);
         }
 
-        public int GetCost(PlayerController player) => player.character.GetEquippedWeapon(weaponName) == null ? cost : cost / 2;
+        public int GetCost(PlayerController player) => player.character.GetWeaponFromInventory(weaponName) == null ? cost : cost / 2;
 
-        public string GetDisplayText(PlayerController player) => player.character.GetEquippedWeapon(weaponName) == null ? $"Purchase {weaponName}" : $"Purchase {weaponName} Ammo";
+        public string GetDisplayText(PlayerController player) => player.character.GetWeaponFromInventory(weaponName) == null ? $"Purchase {weaponName}" : $"Purchase {weaponName} Ammo";
 
         public bool Interact(PlayerController player)
         {
-            var weapon = player.character.GetEquippedWeapon(weaponName);
+            var weapon = player.character.GetWeaponFromInventory(weaponName);
             if (weapon == null)
             {
-                player.character.EquipWeapon(weaponName);
+                player.character.PickupWeapon(weaponName);
                 return true;
             }
             else if (weapon.reserveCurrent < weapon.reserveMax)

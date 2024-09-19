@@ -37,16 +37,17 @@ namespace Zombies.Runtime.Enemies.Common
 
         private void OnEnable()
         {
-            attack.OnAttackStart += OnAttackStart;
+            EnemyAttackinator.OnAttackStart += OnAttackStart;
         }
 
         private void OnDisable()
         {
-            attack.OnAttackStart -= OnAttackStart;
+            EnemyAttackinator.OnAttackStart -= OnAttackStart;
         }
 
-        private void OnAttackStart()
+        private void OnAttackStart(EnemyAttackinator caller)
         {
+            if (caller != attack) return;
             attackTimer = 1f;
         }
 

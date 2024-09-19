@@ -52,20 +52,9 @@ namespace Zombies.Editor
             {
                 var spawn = target.spawns[i];
                 
-                var position = target.transform.TransformPoint(spawn.exitPoint);
-                EditorGUI.BeginChangeCheck();
-                position = Handles.PositionHandle(position, handleOrientation);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Undo.RecordObject(target, "Modified Zombie Spawner Spawn Definition Path");
-                    position = target.transform.InverseTransformPoint(position);
-                    position = (Vector3)Vector3Int.RoundToInt(position * 100f) / 100f;
-                    spawn.exitPoint = position;
-                }
-                
                 for (var j = 0; j < spawn.pathToBarrier.Length; j++)
                 {
-                    position = target.transform.TransformPoint(spawn.pathToBarrier[j]);
+                    var position = target.transform.TransformPoint(spawn.pathToBarrier[j]);
                     EditorGUI.BeginChangeCheck();
                     position = Handles.PositionHandle(position, handleOrientation);
                     if (EditorGUI.EndChangeCheck())
@@ -89,8 +78,6 @@ namespace Zombies.Editor
                         Handles.DrawSolidDisc(Vector3.Lerp(a, b, t), Vector3.up, 0.05f);
                     }
                 }
-
-                Handles.DrawAAPolyLine(target.transform.TransformPoint(spawn.pathToBarrier[^1]), target.transform.TransformPoint(spawn.exitPoint));
             }
             
             window.Repaint();

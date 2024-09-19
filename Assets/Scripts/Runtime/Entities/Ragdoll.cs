@@ -6,11 +6,14 @@ namespace Zombies.Runtime.Entities
 {
     public class Ragdoll : MonoBehaviour
     {
+        public const int MaxRagdolls = 20;
+        
         public float knockbackForce = 1f;
         public Transform root;
-        public Rigidbody[] bodies;
+        
+        private Rigidbody[] bodies;
  
-        public static List<Ragdoll> all = new();
+        public static LinkedList<Ragdoll> all = new();
 
         private void Awake()
         {
@@ -24,11 +27,11 @@ namespace Zombies.Runtime.Entities
 
         private void Start()
         {
-            all.Add(this);
-            while (all.Count > 50)
+            all.AddFirst(this);
+            while (all.Count > MaxRagdolls)
             {
-                var oldest = all[0];
-                all.RemoveAt(0);
+                var oldest = all.Last.Value;
+                all.RemoveLast();
                 Destroy(oldest.gameObject);
             }
         }

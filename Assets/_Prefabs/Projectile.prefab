@@ -5029,7 +5029,6 @@ MonoBehaviour:
     invoker: {fileID: 0}
     point: {x: 0, y: 0, z: 0}
     normal: {x: 0, y: 0, z: 0}
-    hitCollider: {fileID: 0}
   initialSpeed: 100
   maxLifetime: 5
   spawnpointInterpolationFrames: 3

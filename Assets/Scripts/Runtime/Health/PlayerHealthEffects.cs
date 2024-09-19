@@ -38,7 +38,7 @@ namespace Zombies.Runtime.Health
             if (hurtVolume != null)
             {
                 hurtVolume.enabled = player.character.isActiveViewer;
-                var weight = weightCurve.Evaluate((float)health.currentHealth.Value / health.maxHealth) * (1f - throbAmplitude);
+                var weight = weightCurve.Evaluate((float)health.currentHealth.Value / health.maxHealth.Value ) * (1f - throbAmplitude);
                 weight *= 1f + throbCurve.Evaluate(Time.time * throbFrequency % 1f) * throbAmplitude;
                 hurtVolume.weight = weight;
             }

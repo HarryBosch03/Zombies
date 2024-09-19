@@ -6,6 +6,7 @@ using FishNet.Transporting;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Zombies.Runtime.Health;
 using Zombies.Runtime.Interactive;
 using Zombies.Runtime.Utility;
 using Random = UnityEngine.Random;
@@ -13,7 +14,7 @@ using Random = UnityEngine.Random;
 namespace Zombies.Runtime.Player
 {
     [RequireComponent(typeof(CharacterController))]
-    public class PlayerController : NetworkBehaviour
+    public partial class PlayerController : NetworkBehaviour
     {
         public float mouseSensitivity = 0.3f;
         public float controllerSensitivity = 0.3f;
@@ -24,9 +25,20 @@ namespace Zombies.Runtime.Player
         public GameObject[] viewerVisible;
         public GameObject[] ovserverVisible;
 
+        [Space]
+        public Animator knifeAnimator;
+        public float knifeTotalTime;
+        public float knifeRepeatTime;
+        public DamageArgs knifeDamage;
+        public float knifeRange;
+        public float knifeDamageTime;
+        public Transform knifeOffsets;
+
         private Camera mainCamera;
         private InputActionMap input;
         private bool interact;
+        private int knifeCooldown;
+        private bool knifeInputBuffered;
         private InputData pending;
 
         public static event Action<PlayerController> FailedInteractionEvent;
@@ -70,6 +82,16 @@ namespace Zombies.Runtime.Player
             points = GetComponent<PlayerPoints>();
             
             UpdateViewerSpecificVisuals(false);
+        }
+
+        private void OnEnable()
+        {
+            if (knifeOffsets != null) character.cameraModifiers.Add(knifeOffsets);
+        }
+
+        private void OnDisable()
+        {
+            if (knifeOffsets != null) character.cameraModifiers.Remove(knifeOffsets);
         }
 
         public override void OnStartNetwork()
@@ -122,6 +144,7 @@ namespace Zombies.Runtime.Player
                 if (InputDown("Reload")) inputData.reload = true;
 
                 if (InputDown("Interact")) inputData.interact = true;
+                if (InputDown("Knife")) inputData.useKnife = true;
 
                 var m = Mouse.current;
                 var gp = Gamepad.current;
@@ -172,15 +195,63 @@ namespace Zombies.Runtime.Player
             character.moveDirection = inputData.moveDirection;
             character.jump = inputData.jump;
             character.run = inputData.run;
-            if (inputData.switchWeapon > 0) character.SwitchWeapon(inputData.switchWeapon - 1);
+            if (inputData.switchWeapon > 0) character.SwitchToWeapon(inputData.switchWeapon - 1);
             character.shoot = inputData.shoot;
             character.aiming = inputData.aiming;
             character.reload = inputData.reload;
             interact = inputData.interact;
             character.deltaRotation = inputData.lookDelta;
-            
+
+            AttackWithKnife(inputData);
+
             character.Simulate();
             CheckForInteractables();
+        }
+
+        private void AttackWithKnife(InputData inputData)
+        {
+            var knifeTotalFrames = Mathf.RoundToInt(knifeTotalTime * TimeManager.TickRate);
+            var knifeRepeatFrame = knifeTotalFrames - Mathf.RoundToInt((knifeRepeatTime) * TimeManager.TickRate);
+            var knifeDamageFrame = knifeTotalFrames - Mathf.RoundToInt(knifeDamageTime * TimeManager.TickRate);
+            
+            if (knifeCooldown == knifeDamageFrame)
+            {
+                DealKnifeDamage();
+            }
+            
+            if (knifeCooldown == 0) character.ForceWeaponHolstered(false);
+            if (knifeInputBuffered && knifeCooldown <= knifeRepeatFrame)
+            {
+                knifeInputBuffered = false;
+                UseKnife();
+            }
+            else if (inputData.useKnife)
+            {
+                if (knifeCooldown <= knifeRepeatFrame) UseKnife();
+                else knifeInputBuffered = true;
+            }
+            knifeCooldown--;
+        }
+
+        private void DealKnifeDamage()
+        {
+            var ray = new Ray(transform.position + character.headOffset, character.head.forward);
+            if (Physics.Raycast(ray, out var hit, knifeRange))
+            {
+                var health = hit.collider.GetComponentInParent<HealthController>();
+                if (health != null)
+                {
+                    health.TakeDamage(knifeDamage.UpdateWithContext(gameObject, hit.point, transform.right, hit.collider));
+                }
+            }
+        }
+
+        private void UseKnife()
+        {
+            knifeCooldown = Mathf.RoundToInt(knifeTotalTime * TimeManager.TickRate);
+            knifeAnimator.SetInteger("random", Random.value > 0.5f ? 1 : 0);
+            knifeAnimator.SetTrigger("swing");
+            character.ForceWeaponHolstered(true);
         }
 
         public override void CreateReconcile()
@@ -191,6 +262,8 @@ namespace Zombies.Runtime.Player
                 velocity = character.velocity,
                 rotation = character.rotation,
                 moveState = character.moveState,
+                knifeCooldown = knifeCooldown,
+                knifeInputBuffered = knifeInputBuffered,
             };
             Reconcile(data);
         }
@@ -202,6 +275,8 @@ namespace Zombies.Runtime.Player
             character.velocity = data.velocity;
             character.rotation = data.rotation;
             character.moveState = data.moveState;
+            knifeCooldown = data.knifeCooldown;
+            knifeInputBuffered = data.knifeInputBuffered;
         }
 
         private void CheckForInteractables()
@@ -264,6 +339,7 @@ namespace Zombies.Runtime.Player
             public bool aiming;
             public bool reload;
             public bool interact;
+            public bool useKnife;
             public Vector2 lookDelta;
             
             private uint tick;
@@ -277,6 +353,7 @@ namespace Zombies.Runtime.Player
                 switchWeapon = 0;
                 reload = false;
                 interact = false;
+                useKnife = false;
                 lookDelta = default;
             }
         }
@@ -286,6 +363,8 @@ namespace Zombies.Runtime.Player
             public Vector3 position;
             public Vector3 velocity;
             public Vector2 rotation;
+            public int knifeCooldown;
+            public bool knifeInputBuffered;
             public CharacterController.MoveState moveState;
             
             private uint tick;

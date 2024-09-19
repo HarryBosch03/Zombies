@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityToolbarExtender;
 
@@ -26,8 +27,18 @@ namespace Zombies.Editor
 
         private static void UpdateUIVisibility()
         {
+            Canvas[] canvases;
+            var stage = PrefabStageUtility.GetCurrentPrefabStage();
+            if (stage != null)
+            {
+                canvases = stage.prefabContentsRoot.GetComponentsInChildren<Canvas>();
+            }
+            else
+            {
+                canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            }
+            
             var visible = !hideUI;
-            var canvases = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
             foreach (var canvas in canvases)
             {
                 if (visible) SceneVisibilityManager.instance.Show(canvas.gameObject, true);

@@ -5,11 +5,11 @@ namespace Zombies.Runtime.GameMeta.Commands
 {
     public class EquipCommand : IChatCommand
     {
-        public string name => "equip";
+        public string name => "weapon";
 
         public string Perform(PlayerController sender, string[] args)
         {   
-            sender.character.EquipWeapon(args[0]);
+            sender.character.PickupWeapon(args[0]);
             return $"{sender.name} equipped {args[0]}";
         }
     }

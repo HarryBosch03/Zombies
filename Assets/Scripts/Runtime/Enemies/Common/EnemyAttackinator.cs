@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Zombies.Runtime.Entities;
 using Zombies.Runtime.Health;
 
 namespace Zombies.Runtime.Enemies.Common
@@ -13,71 +12,38 @@ namespace Zombies.Runtime.Enemies.Common
 
         public float attackRangeMin;
         public float attackRangeMax;
-        public float preDelay;
-        public float postDelay;
-
-        private Stack<IEnumerator> taskList = new();
         
-        public event Action OnAttackStart;
-        public event Action<DamageArgs> OnAttackLand;
-        public event Action OnAttackEnd;
+        [Space]
+        public Animator animator;
+
+        public static event Action<EnemyAttackinator> OnAttackStart;
+        public static event Action<EnemyAttackinator, DamageArgs> OnAttackLand;
+        public static event Action<EnemyAttackinator> OnAttackEnd;
 
         public GameObject target { get; set; }
         public bool isAttacking { get; private set; }
+        public bool hasLanded { get; private set; }
 
         private void FixedUpdate()
         {
-            if (taskList.Count == 0) taskList.Push(WaitUntilTargetInRange());
-            var task = taskList.Peek();
-            if (task.MoveNext())
+            if (!isAttacking && target != null && (target.transform.position - transform.position).magnitude < attackRangeMin)
             {
-                if (task.Current != null) taskList.Push((IEnumerator)task.Current);
-            }
-            else
-            {
-                taskList.Pop();
+                Attack();
             }
         }
 
-        public void Interrupt()
-        {
-            taskList.Clear();
-        }
-        
-        public void ForceAttack(Action<DamageArgs> onAttackLand, Action onAttackEnd)
-        {
-            taskList.Clear();
-            taskList.Push(Attack(null, onAttackLand, onAttackEnd));
-        }
-
-        public IEnumerator WaitUntilTargetInRange()
-        {
-            while (target == null || (target.transform.position - transform.position).magnitude > attackRangeMin)
-            {
-                yield return null;
-            }
-
-            yield return Attack(OnAttackStart, LandAttack, OnAttackEnd);
-        }
-
-        public IEnumerator Attack(Action onAttackStart, Action<DamageArgs> onAttackLand, Action onAttackEnd)
+        public void Attack()
         {
             isAttacking = true;
-            onAttackStart?.Invoke();
-
-            yield return Wait(preDelay);
-
-            onAttackLand?.Invoke(damage);
-
-            yield return Wait(postDelay);
-            isAttacking = false;
-
-            onAttackEnd?.Invoke();
+            
+            if (animator != null) animator.SetTrigger("attack");
+            OnAttackStart?.Invoke(this);
         }
 
-        public void LandAttack(DamageArgs args)
+        public void LandAttack()
         {
-            if ((target.transform.position - transform.position).magnitude < attackRangeMax)
+            var isFrozen = animator.GetCurrentAnimatorStateInfo(0).IsTag("Freeze");
+            if (target != null && (target.transform.position - transform.position).magnitude < attackRangeMax && !isFrozen)
             {
                 var health = target.GetComponent<HealthController>();
                 if (health != null)
@@ -86,17 +52,8 @@ namespace Zombies.Runtime.Enemies.Common
                 }
             }
 
-            OnAttackLand?.Invoke(damage);
-        }
-
-        public static IEnumerator Wait(float duration)
-        {
-            var t = 0f;
-            while (t < duration)
-            {
-                t += Time.deltaTime;
-                yield return null;
-            }
+            hasLanded = true;
+            OnAttackLand?.Invoke(this, damage);
         }
 
         private void OnDrawGizmos()
@@ -107,6 +64,13 @@ namespace Zombies.Runtime.Enemies.Common
             Gizmos.DrawWireSphere(Vector3.zero, attackRangeMin);
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(Vector3.zero, attackRangeMax);
+        }
+
+        public void EndAttack()
+        {
+            OnAttackEnd?.Invoke(this);
+            isAttacking = false;
+            hasLanded = false;
         }
     }
 }

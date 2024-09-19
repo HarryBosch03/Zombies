@@ -91,7 +91,7 @@ namespace Zombies.Runtime.Player
             }
         }
 
-        private void AwardPoints(string reason, int points)
+        public void AwardPoints(string reason, int points)
         {
             if (!IsServerStarted) return;
             currentPoints.Value += points;

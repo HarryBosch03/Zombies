@@ -80,12 +80,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   projectile: {fileID: 6884705873866427076, guid: e952565a37c704c4697f3becc53336a5, type: 3}
   damage:
-    damage: 26
+    damage: 140
     ignoreLocationalDamage: 0
     invoker: {fileID: 0}
     point: {x: 0, y: 0, z: 0}
     normal: {x: 0, y: 0, z: 0}
-    hitCollider: {fileID: 0}
   physicalSpawnpoint: {fileID: 0}
   visualSpawnpoint: {fileID: 7530918934664189913}
   fireRate: 620
@@ -94,13 +93,16 @@ MonoBehaviour:
   magazineSize: 30
   reserveCurrent: 0
   reserveMax: 240
+  reserveMagazineCount: 8
   reloadTime: 1.6
   aimFieldOfView: 70
   defaultViewportFieldOfView: 50
-  aimViewportFieldOfView: 30
+  aimViewportFieldOfView: 50
   aimViewportCenterPlane: 0.15
-  recoilBase: {x: 0, y: 15}
-  recoilVariance: {x: 22, y: 2}
+  equipDelay: 0.4
+  recoilStrength: 8
+  recoilStrengthRandom: 0.2
+  recoilAngle: 180
   aimDuration: 0.2
   forceAim: 0
 --- !u!114 &6711442809580480308

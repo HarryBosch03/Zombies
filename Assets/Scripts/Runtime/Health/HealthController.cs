@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Zombies.Runtime.Entities;
+using Zombies.Runtime.GameControl;
 
 namespace Zombies.Runtime.Health
 {
@@ -11,8 +13,12 @@ namespace Zombies.Runtime.Health
     {
         public static float headshotDamageMultiplier = 3f;
 
+        [FormerlySerializedAs("maxHealth")]
+        public int baseMaxHealth = 50;
+        public int maxHealthPerRound = 100;
+        
         public readonly SyncVar<int> currentHealth = new SyncVar<int>();
-        public int maxHealth = 100;
+        public readonly SyncVar<int> maxHealth = new SyncVar<int>();
 
         [Space]
         public bool canPassiveRegen;
@@ -37,19 +43,21 @@ namespace Zombies.Runtime.Health
 
         public override void OnStartServer()
         {
-            currentHealth.Value = maxHealth;
+            var round = ZombiesGameMode.instance != null ? ZombiesGameMode.instance.currentRound.Value : 1;
+            maxHealth.Value = baseMaxHealth + round * maxHealthPerRound;
+            currentHealth.Value = maxHealth.Value;
         }
 
         private void Update()
         {
-            if (IsServerStarted && canPassiveRegen && currentHealth.Value < maxHealth)
+            if (IsServerStarted && canPassiveRegen && currentHealth.Value < maxHealth.Value)
             {
                 passiveRegenTimer += Time.deltaTime;
                 while (passiveRegenTimer >= 1f / passiveRegenRate)
                 {
                     currentHealth.Value += passiveRegenAmount;
                     passiveRegenTimer -= 1f / passiveRegenRate;
-                    if (currentHealth.Value > maxHealth) currentHealth.Value = maxHealth;
+                    if (currentHealth.Value > maxHealth.Value) currentHealth.Value = maxHealth.Value;
                 }
             }
         }
@@ -101,12 +109,17 @@ namespace Zombies.Runtime.Health
         [ObserversRpc(RunLocally = true)]
         private void SetDeadRpc(DamageReport report)
         {
-            gameObject.SetActive(false);
             if (ragdoll != null)
             {
                 var instance = Instantiate(ragdoll, transform.position, transform.rotation);
                 instance.Spawn(modelRoot, report);
             }
+            if (damageFx != null)
+            {
+                damageFx.transform.SetParent(null);
+                Destroy(damageFx.gameObject, 5f);
+            }
+            gameObject.SetActive(false);
             OnDie?.Invoke(this, report);
         }
 

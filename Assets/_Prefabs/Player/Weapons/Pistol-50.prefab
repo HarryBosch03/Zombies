@@ -49,12 +49,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   projectile: {fileID: 6884705873866427076, guid: e952565a37c704c4697f3becc53336a5, type: 3}
   damage:
-    damage: 40
+    damage: 250
     ignoreLocationalDamage: 0
     invoker: {fileID: 0}
     point: {x: 0, y: 0, z: 0}
     normal: {x: 0, y: 0, z: 0}
-    hitCollider: {fileID: 0}
   physicalSpawnpoint: {fileID: 0}
   visualSpawnpoint: {fileID: 3379528859069943415}
   fireRate: 600
@@ -67,10 +66,12 @@ MonoBehaviour:
   reloadTime: 1.2
   aimFieldOfView: 70
   defaultViewportFieldOfView: 50
-  aimViewportFieldOfView: 30
+  aimViewportFieldOfView: 50
   aimViewportCenterPlane: 0.15
-  recoilBase: {x: 0, y: 25}
-  recoilVariance: {x: 35, y: 2}
+  equipDelay: 0.4
+  recoilStrength: 35
+  recoilStrengthRandom: 0.2
+  recoilAngle: 140
   aimDuration: 0.2
   forceAim: 0
 --- !u!114 &6842326910389263276

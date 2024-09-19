@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using FishNet.Object;
 using UnityEngine;
 using Zombies.Runtime.Health;
@@ -8,6 +9,8 @@ namespace Zombies.Runtime.Player
 {
     public class CharacterController : MonoBehaviour
     {
+        public const int CollisionIterations = 4;
+
         [Header("MOVEMENT")]
         public float walkSpeed;
         public float runSpeed;
@@ -27,6 +30,8 @@ namespace Zombies.Runtime.Player
         public float fovDamping = 0.1f;
         public Transform head;
         public Vector3 headOffset = new Vector3(0f, 1.7f, 0f);
+        public Vector2 movementDutch;
+        public float movementDutchSmoothing;
 
         [Space]
         [Header("PHYSICS")]
@@ -49,8 +54,10 @@ namespace Zombies.Runtime.Player
 
         private Camera mainCamera;
         private Vector2 recoilVelocity;
+        private Vector2 currentMovementDutch;
         private bool shootLastFrame;
         private float dutchTimer;
+        private bool forceHolstered;
 
         public static List<CharacterController> all = new();
         public static event Action<CharacterController, bool> ActiveViewerChanged;
@@ -64,6 +71,7 @@ namespace Zombies.Runtime.Player
         public Vector2 rotation { get; set; }
         public Vector2 deltaRotation { get; set; }
         public MoveState moveState { get; set; }
+        public List<Transform> cameraModifiers { get; } = new();
 
         public Vector3 velocity { get; set; }
         public bool onGround { get; private set; }
@@ -77,13 +85,13 @@ namespace Zombies.Runtime.Player
         public void SetIsActiveViewer(bool isActiveViewer)
         {
             this.isActiveViewer = isActiveViewer;
-            
+
             if (isActiveViewer)
             {
                 mainCamera.transform.SetParent(head);
                 mainCamera.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             }
-            
+
             ActiveViewerChanged?.Invoke(this, isActiveViewer);
         }
 
@@ -103,7 +111,7 @@ namespace Zombies.Runtime.Player
             {
                 if (equippedWeapons[i] != null)
                 {
-                    SwitchWeapon(i);
+                    SwitchToWeapon(i);
                     break;
                 }
             }
@@ -149,7 +157,7 @@ namespace Zombies.Runtime.Player
                 x = finalRotation.x % 360f,
                 y = Mathf.Clamp(finalRotation.y, -90f, 90f),
             };
-            
+
             transform.rotation = Quaternion.Euler(0f, finalRotation.x, 0f);
             head.localPosition = headOffset;
 
@@ -158,6 +166,21 @@ namespace Zombies.Runtime.Player
             {
                 dutchTimer -= Time.fixedDeltaTime;
                 dutch = dutchCurve.Evaluate(1f - dutchTimer / damageDutchDuration) * damageDutchAngle;
+            }
+
+            var targetMovementDutch = new Vector2
+            {
+                x = Vector3.Dot(transform.right, velocity),
+                y = Vector3.Dot(transform.forward, velocity),
+            } * movementDutch;
+            currentMovementDutch = Vector2.Lerp(currentMovementDutch, targetMovementDutch, Time.deltaTime / Mathf.Max(Time.deltaTime, movementDutchSmoothing));
+
+            dutch += currentMovementDutch.x;
+            finalRotation.y += currentMovementDutch.y;
+
+            foreach (var camMod in cameraModifiers)
+            {
+                finalRotation += new Vector2(camMod.localEulerAngles.y, -camMod.localEulerAngles.x);
             }
 
             head.rotation = Quaternion.Euler(-finalRotation.y, finalRotation.x, 0f) * Quaternion.Euler(0f, 0f, dutch);
@@ -195,16 +218,19 @@ namespace Zombies.Runtime.Player
             if (isActiveAndEnabled)
             {
                 moveDirection = Vector3.ClampMagnitude(new Vector3(moveDirection.x, 0f, moveDirection.z), 1f);
-                
+
                 UpdateMoveState();
                 ApplyGravity();
                 CheckForGround();
                 Move();
                 Jump();
                 ApplyRecoil();
-                
-                Iterate();
-                Collide();
+
+                for (var i = 0; i < CollisionIterations; i++)
+                {
+                    Iterate(CollisionIterations);
+                    Collide();
+                }
             }
 
             rotation += deltaRotation;
@@ -225,7 +251,7 @@ namespace Zombies.Runtime.Player
 
         public void AddRecoil(Vector2 dv) { recoilVelocity += dv * recoilDecay / 20f; }
 
-        private void Iterate() { transform.position += velocity * Time.fixedDeltaTime; }
+        private void Iterate(int subFrameCount) { transform.position += velocity * Time.fixedDeltaTime / subFrameCount; }
 
         private void Collide()
         {
@@ -234,7 +260,7 @@ namespace Zombies.Runtime.Player
             {
                 if (collider.isTrigger) continue;
 
-                var broadPhase = Physics.OverlapBox(collider.bounds.center, collider.bounds.extents, Quaternion.identity, collisionMask);
+                var broadPhase = Physics.OverlapBox(collider.bounds.center, collider.bounds.extents * 2f, Quaternion.identity, collisionMask);
                 foreach (var other in broadPhase)
                 {
                     if (other.isTrigger || other.transform.IsChildOf(transform)) continue;
@@ -289,18 +315,31 @@ namespace Zombies.Runtime.Player
 
             jump = false;
         }
-        
-        public void SwitchWeapon(int index)
+
+        public void SwitchToWeapon(int index)
         {
             if (equippedWeapons[index] == null) return;
             if (activeWeapon == equippedWeapons[index]) return;
 
-            if (activeWeapon) activeWeapon.gameObject.SetActive(false);
-            activeWeapon = equippedWeapons[index];
-            if (activeWeapon) activeWeapon.gameObject.SetActive(true);
+            if (forceHolstered)
+            {
+                activeWeapon = equippedWeapons[index];
+            }
+            else
+            {
+                if (activeWeapon) activeWeapon.gameObject.SetActive(false);
+                activeWeapon = equippedWeapons[index];
+                if (activeWeapon) activeWeapon.gameObject.SetActive(true);
+            }
         }
 
-        public PlayerWeapon GetEquippedWeapon(string name)
+        public void ForceWeaponHolstered(bool forceHolstered)
+        {
+            this.forceHolstered = forceHolstered;
+            if (activeWeapon != null) activeWeapon.gameObject.SetActive(!forceHolstered);
+        }
+
+        public PlayerWeapon GetWeaponFromInventory(string name)
         {
             foreach (var weapon in equippedWeapons)
             {
@@ -310,7 +349,7 @@ namespace Zombies.Runtime.Player
             return null;
         }
 
-        public void EquipWeapon(string name)
+        public void PickupWeapon(string name)
         {
             var index = getIndex();
 
@@ -319,7 +358,7 @@ namespace Zombies.Runtime.Player
                 if (weapon != null && SimplifyWeaponName(weapon.name) == SimplifyWeaponName(name))
                 {
                     equippedWeapons[index] = weapon;
-                    SwitchWeapon(index);
+                    SwitchToWeapon(index);
                 }
             }
 

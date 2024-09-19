@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FishNet;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using UnityEngine;
 using Zombies.Runtime.Enemies.Common;
 using Zombies.Runtime.Health;
@@ -14,7 +15,7 @@ namespace Zombies.Runtime.GameControl
         public bool verboseLogging;
 
         [Space]
-        public int currentRound;
+        public readonly SyncVar<int> currentRound = new();
         public int zombiesLeft;
         public float speedModifier;
 
@@ -24,8 +25,8 @@ namespace Zombies.Runtime.GameControl
         public float enemiesPerRoundQuadratic;
 
         [Space]
-        public float enemySpeedLinear;
-        public float enemySpeedInvQuadratic;
+        public float enemySpeedMax = 1f;
+        public float enemySpeedGradient = 1f;
 
         [Space]
         public int maxActiveSpawners = 4;
@@ -35,6 +36,16 @@ namespace Zombies.Runtime.GameControl
         private List<GameObject> trackedZombies = new();
         private ZombieSpawner[] activeSpawners = new ZombieSpawner[0];
 
+        private static ZombiesGameMode privateInstance;
+        public static ZombiesGameMode instance
+        {
+            get
+            {
+                if (privateInstance == null) privateInstance = FindAnyObjectByType<ZombiesGameMode>();
+                return privateInstance;
+            }
+        }
+        
         public override void OnStartNetwork() => enabled = IsServerInitialized;
 
         private void OnEnable() { HealthController.OnDie += OnDie; }
@@ -70,9 +81,9 @@ namespace Zombies.Runtime.GameControl
                 }
                 else if (trackedZombies.Count == 0)
                 {
-                    currentRound++;
-                    zombiesLeft = Mathf.RoundToInt(enemiesPerRoundConstant + enemiesPerRoundLinear * currentRound + enemiesPerRoundQuadratic * currentRound * currentRound);
-                    EnemyMovement.globalSpeedModifier = enemySpeedLinear * currentRound + enemySpeedInvQuadratic * Mathf.Sqrt(currentRound);
+                    currentRound.Value++;
+                    zombiesLeft = Mathf.RoundToInt(enemiesPerRoundConstant + enemiesPerRoundLinear * currentRound.Value + enemiesPerRoundQuadratic * currentRound.Value * currentRound.Value);
+                    EnemyMovement.globalSpeedModifier = enemySpeedMax * (enemySpeedMax / (-enemySpeedGradient * currentRound.Value - enemySpeedMax) + 1f);
                     speedModifier = Mathf.RoundToInt(EnemyMovement.globalSpeedModifier * 100f);
                 }
 
@@ -104,10 +115,13 @@ namespace Zombies.Runtime.GameControl
             if (bestSpawner != null)
             {
                 var zombie = bestSpawner.Spawn();
-                trackedZombies.Add(zombie);
-                if (zombie != null) VerboseLog($"Spawner {bestSpawner.name} Successfully Triggered");
+                if (zombie != null)
+                {
+                    trackedZombies.Add(zombie);
+                    zombiesLeft--;
+                    VerboseLog($"Spawner {bestSpawner.name} Successfully Triggered");
+                }
                 else VerboseLog($"Spawner {bestSpawner.name} Failed to Trigger");
-                zombiesLeft--;
             }
             else
             {
@@ -124,6 +138,7 @@ namespace Zombies.Runtime.GameControl
             maxActiveSpawners = Mathf.Max(1, maxActiveSpawners);
         }
 
+        [HideInCallstack]
         public void VerboseLog(object message)
         {
             if (verboseLogging) Debug.Log(message);

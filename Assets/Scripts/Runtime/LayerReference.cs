@@ -12,7 +12,7 @@ namespace Zombies.Runtime
         public const int Ragdoll = 7;
         public const int LevelStatics = 8;
         public const int LevelDynamic = 9;
-        public const int UndefLayer10 = 10;
+        public const int MovementBlocker = 10;
         public const int UndefLayer11 = 11;
         public const int UndefLayer12 = 12;
         public const int UndefLayer13 = 13;

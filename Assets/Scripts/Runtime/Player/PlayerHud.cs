@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Zombies.Runtime.GameControl;
 using Zombies.Runtime.Health;
 using Zombies.Runtime.Utility;
 
@@ -13,6 +14,7 @@ namespace Zombies.Runtime.Player
         public TMP_Text ammoLabel;
         public Image reloadProgress;
         public TMP_Text healthValue;
+        public TMP_Text roundCounter;
         public Image colorOverlay;
         public float damageFxDuration = 0.2f;
         public Color damageOverlayColor = new Color(1f, 0f, 0f, 0.3f);
@@ -65,6 +67,15 @@ namespace Zombies.Runtime.Player
             UpdateOverlay();
             UpdateShake();
             UpdateCrosshair();
+            UpdateRoundCounter();
+        }
+
+        private void UpdateRoundCounter()
+        {
+            if (roundCounter != null)
+            {
+                roundCounter.text = (ZombiesGameMode.instance != null ? ZombiesGameMode.instance.currentRound.Value : 1).ToString();
+            }
         }
 
         private void UpdateCrosshair()
@@ -120,14 +131,14 @@ namespace Zombies.Runtime.Player
 
         private void UpdateHealth()
         {
-            if (healthValue) healthValue.text = $"{character.health.currentHealth.Value}/{character.health.maxHealth}";
+            if (healthValue) healthValue.text = $"{character.health.currentHealth.Value}/{character.health.maxHealth.Value}";
         }
 
         private void UpdateFace()
         {
             if (face)
             {
-                var row = Mathf.FloorToInt(3f * (1f - (float)character.health.currentHealth.Value / character.health.maxHealth));
+                var row = Mathf.FloorToInt(3f * (1f - (float)character.health.currentHealth.Value / character.health.maxHealth.Value));
                 face.anchoredPosition = new Vector2(-Mathf.FloorToInt(faceClock), row) * 125f;
             }
 
